@@ -24,6 +24,7 @@ import os
 import sys
 import argparse
 from time import time
+from moviepy.editor import VideoFileClip
 
 # add lib to path
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))+"/../lib")
@@ -38,18 +39,43 @@ date = "2017-04-27"
 # Definieren der Kommandozeilenparameter
 parser = argparse.ArgumentParser(description='a tool for detecting lane lines in images and videos',
                                  epilog='author: alexander.vogel@prozesskraft.de | version: ' + version + ' | date: ' + date)
-parser.add_argument('--image', metavar='PATH', type=str, nargs='*', required=False,
+parser.add_argument('--image', metavar='PATH', type=str, nargs='?', required=False,
                    help='image from a front facing camera. to detect lane lines')
-parser.add_argument('--video', metavar='PATH', type=str, nargs='*', required=False,
+parser.add_argument('--video', metavar='PATH', type=str, nargs='?', required=False,
                    help='video from a front facing camera. to detect lane lines')
-parser.add_argument('--visLog', action='store_true', default=False,
-                   help='for debugging or documentation of the pipeline. use only with one image. creates an output image for every step of the pipeline.')
+parser.add_argument('--visLog', metavar='INT', type=int, action='store', default=False,
+                   help='for debugging or documentation of the pipeline. \
+                   1=undistorted image \
+                   2=grayscale \
+                   3=binary mask magnitude sobel xy \
+                   4=hls binary mask \
+                   5=combination of binary masks \
+                   6=unwarped binary with polygon \
+                   7=warped binary with polygon \
+                   8=warped binary \
+                   9=histogram' )
 parser.add_argument('--outDir', metavar='PATH', action='store', default='output_directory_'+str(time()),
                    help='directory for output data. must not exist at call time.')
 parser.add_argument('--calDir', metavar='PATH', action='store', required=False, default=etcDir + '/camera_cal',
                    help='directory for camera calibration images. directory must only contain chessboard 9x6 calibration images.')
 
 args = parser.parse_args()
+
+map_int_name = {    
+                    0: '00_original',
+                    1: '01_undist',
+                    2: '02_gray',
+                    3: '03_binary_sobelxy',
+                    4: '04_binary_hls',
+                    5: '05_combined_binaries',
+                    6: '06_transform1',
+                    7: '07_transform2',
+                    8: '08_warped_binary',
+                    9: '09_histogram',
+                    10:'10_ployline',
+                }
+
+
 
 errors = 0
 
@@ -60,17 +86,15 @@ if not args.image and not args.video:
 
 # check if all provided images exist
 if args.image:
-    for path in args.image:
-        if not os.path.isfile(path):
-            log('error', 'image does not exist:'+ path)
-            errors += 1
+    if not os.path.isfile(args.image):
+        log('error', 'image does not exist:'+ args.image)
+        errors += 1
 
 # check if all provided videos exist
 if args.video:
-    for path in args.video:
-        if not os.path.isfile(path):
-            log('error', 'video does not exist:'+ path)
-            errors += 1
+    if not os.path.isfile(args.video):
+        log('error', 'video does not exist:'+ args.video)
+        errors += 1
         
 # check if calDir does NOT exist
 if not os.path.isdir(args.calDir):
@@ -89,11 +113,8 @@ if errors > 0:
 log('info', '--outDir='+args.outDir)
 log('info', '--calDir='+args.calDir)
 
-#======================
-#
-# 1) Create Output Directory
-#
-#----------------------
+log('info', 'visual logging is ' + str(args.visLog))
+
 
 
 #======================
@@ -112,20 +133,30 @@ ret, mtx, dist, rvecs, tvecs = calibrateCamera(args.calDir)
 
 
 
+def process_image(img):
+    return laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
 
 
 
-for imagePath in args.image:
+
+if args.image:
     
     # read image
-    img = mpimg.imread(imagePath)
-    
-    plt.imshow(img)
-    plt.show()
-
+    img = mpimg.imread(args.image)
     result = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
 
+    print(map_int_name[args.visLog])
+    writeImage(result, args.outDir, map_int_name[args.visLog], cmap=None)
+
+if args.video:
+    video_output = args.outDir + '/video_out.mp4'
+    clip1 = VideoFileClip(args.video, audio=False)
+    white_clip = clip1.fl_image(process_image) #NOTE: this function expects color images!!
     
-    
+    if not os.path.isdir(args.outDir):
+        log('info', 'creating output directory: ' + args.outDir)
+        os.mkdir(args.outDir)
+
+    white_clip.write_videofile(video_output, audio=False)
     
 
