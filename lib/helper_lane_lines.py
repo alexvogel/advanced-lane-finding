@@ -113,7 +113,7 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, sobel_kernel=5, mag_sobelxy_
 
     # warp image from camera view to birds eye view
 #    log('debug', 'transform image from camera view to birds eye view')
-    binary_combined_warped, figs = transformToBirdsView(binary_combined)
+    binary_combined_warped, figs, M, Minv = transformToBirdsView(binary_combined)
     if retNr == 6:
         figs[0].canvas.draw() # draw the canvas, cache the renderer
         tmp = np.fromstring(figs[0].canvas.tostring_rgb(), dtype=np.uint8, sep='')
@@ -141,7 +141,7 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, sobel_kernel=5, mag_sobelxy_
         return tmp2
     
     # finding the lines
-    found_lines = findLines(binary_combined_warped)
+    found_lines, left_x, right_x, y = findLines(binary_combined_warped)
     if retNr == 10:
         return found_lines
     
@@ -244,8 +244,8 @@ def findLines(binary_warped):
     plt.xlim(0, 1280)
     plt.ylim(720, 0)
 
-#    plt.show()
-    return out_img
+    plt.show()
+    return out_img, left_fitx, right_fitx, ploty
 
 def transformToBirdsView(img):
     '''
@@ -300,12 +300,13 @@ def transformToBirdsView(img):
     
     # create transformation matrix
     M = cv2.getPerspectiveTransform(src, dst)
+    Minv = cv2.getPerspectiveTransform(dst, src)
     
     img_size = (img.shape[1], img.shape[0])
     
     # transformation
     warped = cv2.warpPerspective(img, M, img_size, flags=cv2.INTER_LINEAR)
-    
+
     # show result
     fig2, ax2 = plt.subplots(1)
     ax2.imshow(warped)
@@ -323,7 +324,7 @@ def transformToBirdsView(img):
 #    plt.show()
     
 
-    return warped, [fig, fig2]
+    return warped, [fig, fig2], M, Minv
     
 
 def combineBinaries(listBinaries):
