@@ -61,76 +61,78 @@ def writeImage(item, dir, basename, cmap=None):
     
     plt.clf()
 
-def laneLinePipeline(rgb, mtx, dist, outDir, retNr, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255)):
+def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255)):
     '''
         processes an image from input to output in finding a lane line
         img: input image in bgr colorspace
         mtx: camera calibration matrix
         dist: camera distortion coefficients
         outDir: output directory path
-        visLog: if True, also output the single steps in pipeline
+        retNr: return the result of a certain step of the pipeline
+        leftLine: tracking instance for the left line
+        rightLine: tracking instance for the right line
         sobel_kernel: size of the sobel kernel
         mag_sobelxy_thresh: tuple of min and max threshold for the binary generation
         return: image with detected-lanes-overlay
     '''
 
-    if retNr == 0:
+    if retNr is 0:
         return rgb
 
     # undistort
     #undistort = np.copy(rgb)
 #    log('debug', 'undistort image')
     rgb_undistort = cv2.undistort(rgb, mtx, dist, None, mtx)
-    if retNr == 1:
-        return rgb_undistort
+    if retNr is 1:
+        return rgb_undistort, leftLine, rightLine
 
     # convert to grayscale
 #    log('debug', 'convert to grayscale')
     gray = cv2.cvtColor(rgb_undistort, cv2.COLOR_RGB2GRAY)
-    if retNr == 2:
-        return cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
+    if retNr is 2:
+        return cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB), leftLine, rightLine
 
     # create binary mask of the thresholded magnitude of sobel operator
 #    log('debug', 'create binary mask with abs_sobelxy operator')
     binary_output_abs_sobelxy = getBinaryMagSobelXY(gray, sobel_kernel, mag_sobelxy_thresh)
-    if retNr == 3:
+    if retNr is 3:
         tmp = binary_output_abs_sobelxy * 255
-        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB)
-    
+        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB), leftLine, rightLine
+
     # create binary mask of the thresholded s of the colorspace hls
 #    log('debug', 'create binary mask with the s of the HLS color space')
     binary_output_s_of_hls = getBinarySHls(rgb_undistort, hls_thresh)
-    if retNr == 4:
+    if retNr is 4:
         tmp = binary_output_s_of_hls * 255
-        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB)
-    
+        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB), leftLine, rightLine
+
     # create a combined binary (gradient and colorspace)
 #    log('debug', 'combine sobel and s binary mask to a single binary mask')
     binary_combined = combineBinaries([binary_output_abs_sobelxy, binary_output_s_of_hls])
-    if retNr == 5:
+    if retNr is 5:
         tmp = binary_combined * 255
-        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB)
+        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB), leftLine, rightLine
 
     # warp image from camera view to birds eye view
 #    log('debug', 'transform image from camera view to birds eye view')
     binary_combined_warped, figs, M, Minv = transformToBirdsView(binary_combined)
-    if retNr == 6:
+    if retNr is 6:
         figs[0].canvas.draw() # draw the canvas, cache the renderer
         tmp = np.fromstring(figs[0].canvas.tostring_rgb(), dtype=np.uint8, sep='')
         tmp2 = tmp.reshape(figs[0].canvas.get_width_height()[::-1] + (3,))
-        return tmp2
-    if retNr == 7:
+        return tmp2, leftLine, rightLine
+    if retNr is 7:
         figs[1].canvas.draw() # draw the canvas, cache the renderer
         tmp = np.fromstring(figs[1].canvas.tostring_rgb(), dtype=np.uint8, sep='')
         tmp2 = tmp.reshape(figs[1].canvas.get_width_height()[::-1] + (3,))
-        return tmp2
-    if retNr == 8:
+        return tmp2, leftLine, rightLine
+    if retNr is 8:
         tmp = binary_combined_warped * 255
-        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB)
+        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB), leftLine, rightLine
     
     # take a histogram along all the columns in the lower half of the image
     histogram = np.sum(binary_combined_warped[binary_combined_warped.shape[0]//2:, :], axis=0)
-    if retNr == 9:
+    if retNr is 9:
         plt.clf()
         fig = plt.figure(1)
         ax = plt.axes()
@@ -138,16 +140,300 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, sobel_kernel=5, mag_sobelxy_
         fig.canvas.draw()
         tmp = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
         tmp2 = tmp.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-        return tmp2
+        return tmp2, leftLine, rightLine
+
+    # calc lane width
+    widthMeter = calcLaneWidth(leftLine, rightLine)
+
+    # detect Lines
+    if leftLine.isDetected() and rightLine.isDetected() and isLaneWidthPlausible(widthMeter):
+        left_line_x, right_line_x, both_lines_y, left_poly_coeff, right_poly_coeff = findLinesSimple(binary_combined_warped, leftLine.getBestPolyCoeff(), rightLine.getBestPolyCoeff())
+    else:
+        # finding the lines
+        sliding_window, left_line_x, right_line_x, both_lines_y, left_poly_coeff, right_poly_coeff = findLines(binary_combined_warped)
+
+    # set the coeffs
+    leftLine.setDetected(True)
+    rightLine.setDetected(True)
+    leftLine.setCurrentPolyCoeff(left_poly_coeff)
+    rightLine.setCurrentPolyCoeff(right_poly_coeff)
+    leftLine.setXAndPolyCoeff(left_line_x[-1], left_poly_coeff)
+    rightLine.setXAndPolyCoeff(right_line_x[-1], right_poly_coeff)
+
+    # calculate radius of lane
+    leftRadiusMeter, rightRadiusMeter = calcRadius(left_line_x, right_line_x)
+    leftLine.setRadiusOfCurvature(leftRadiusMeter)
+    rightLine.setRadiusOfCurvature(rightRadiusMeter)
     
-    # finding the lines
-    found_lines, left_x, right_x, y = findLines(binary_combined_warped)
-    if retNr == 10:
-        return found_lines
+    # draw the polyfitted lines on undistorted original image
+    polyfit_on_undistorted = drawPolyfitOnImage(rgb_undistort, binary_combined_warped, Minv, left_line_x, right_line_x, both_lines_y)
+    if retNr is 11:
+        return polyfit_on_undistorted
     
-    return found_lines
+    # calc the deviation of the lane center of vehicle
+    vehicleCenterDeviation = calcVehicleDeviation(left_line_x, right_line_x, both_lines_y)
+    leftLine.setLineBasePos(vehicleCenterDeviation)
+    rightLine.setLineBasePos(vehicleCenterDeviation)
+
+    # write text on image
+    resultImage = writeText(polyfit_on_undistorted, (leftRadiusMeter+rightRadiusMeter)/2, vehicleCenterDeviation, widthMeter)
+    if retNr is 14:
+        return resultImage, leftLine, rightLine
+    
+    return resultImage, leftLine, rightLine
+
+def calcVehicleDeviation(left_poly_x, right_poly_x, poly_y):
+    '''
+        calculating the deviation of vehicle of the center of the lane
+        leftx: x-values for the left line
+        rightx: x-values for the right line
+        return: deviationMeters (neg => left of center, pos => right of center)
+    '''
+    
+    # the distance of the left and right polyline in pixels
+    lineDistancePixels = right_poly_x[-1] - left_poly_x[-1]
+    #print('lineDistancePixels', lineDistancePixels)
+    
+    # the center of the lane in Pixels
+    laneCenterAtPixel = left_poly_x[-1] + lineDistancePixels/2
+    #print('laneCenterAtPixel', laneCenterAtPixel)
+    
+    # the position of the vehicle (camera) in pixels
+    cameraCenterOfImg = 1280/2
+    #print('cameraCenterOfImg', cameraCenterOfImg)
+    
+    # deviation of the vehicle from the lane center in pixels
+    deviationInPixels = cameraCenterOfImg - laneCenterAtPixel
+    #print('deviationInPixels', deviationInPixels)
+    
+    # if lane is 3.7 wide, how many meter is 1 pixel
+    metersPerPixel = 3.7 / lineDistancePixels
+    #print('metersPerPixel', metersPerPixel)
+    
+    # the deviation in meters
+    deviationOfVehicleFromLaneCenterMeter = metersPerPixel * deviationInPixels
+    #print('deviationOfVehicleFromLaneCenterMeter', deviationOfVehicleFromLaneCenterMeter)
+    
+    return deviationOfVehicleFromLaneCenterMeter
+
+def calcLaneWidth(leftLine, rightLine):
+    '''
+        calculate lane width in meters
+        leftLine: data of left line
+        rightLine: data of right line
+        return: lane width
+    '''
+    if leftLine.getX() and rightLine.getX():
+        
+#        x_px_per_meter = 700/3.7
+#        laneWidthMeter = 3.7
+        x_meter_per_px = 3.7/700
+        actualLaneWidthPixel = rightLine.getX() - leftLine.getX()
+        return actualLaneWidthPixel * x_meter_per_px
+    
+    return False
+
+def isLaneWidthPlausible(widthMeter):
+    '''
+        determine whether lane width is plausible.
+        widthMeter: width in meter
+        return: bool if lane width is plausible
+    '''
+    result = False
+    
+    lowerBoundMeter = 3
+    upperBoundMeter = 4.5
+    
+    if not widthMeter:
+        return False
+    
+    if widthMeter < lowerBoundMeter or upperBoundMeter > upperBoundMeter:
+        result = False
+    else:
+        result = True
+    
+#    print('isLaneWidthPlausible:', result)
+    
+    return result
+    
+def writeText(img, curvatureMeter, vehicleCenterDeviation, laneWidth):
+    '''
+        writes the lane curvature onto the image
+        img: image
+        curvatureMeter: the curvature in meters
+        return: image_with_text
+    '''
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    dir = 'right'
+    
+    if vehicleCenterDeviation < 0:
+        dir = 'left'
+    
+    cv2.putText(img, 'Radius of Curvature = '+str(int(curvatureMeter))+'m', (50, 50), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+    cv2.putText(img, 'Vehicle is '+'{:4.2f}'.format(abs(vehicleCenterDeviation))+'m '+dir+' of center', (50, 80), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+    if laneWidth:
+        cv2.putText(img, 'Lane Width is '+'{:4.2f}'.format(laneWidth)+'m ', (50, 110), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+   
+    return img
+    
+
+def calcRadius(leftx, rightx):
+    '''
+        calculate the radius of the left and the right line
+        leftx: x-values for the left line
+        rightx: x-values for the right line
+        return: leftRadius, rightRadius
+    '''
+    # Generate some fake data to represent lane-line pixels
+    ploty = np.linspace(0, 719, num=720)# to cover same y-range as image
+    quadratic_coeff = 3e-4 # arbitrary quadratic coefficient
+    # For each y position generate random x position within +/-50 pix
+    # of the line base position in each case (x=200 for left, and x=900 for right)
+    leftx = np.array([200 + (y**2)*quadratic_coeff + np.random.randint(-50, high=51) 
+                                  for y in ploty])
+    rightx = np.array([900 + (y**2)*quadratic_coeff + np.random.randint(-50, high=51) 
+                                    for y in ploty])
+    
+    leftx = leftx[::-1]  # Reverse to match top-to-bottom in y
+    rightx = rightx[::-1]  # Reverse to match top-to-bottom in y
+    
+    
+    # Fit a second order polynomial to pixel positions in each fake lane line
+    left_fit = np.polyfit(ploty, leftx, 2)
+    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+    right_fit = np.polyfit(ploty, rightx, 2)
+    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+    
+    # Plot up the fake data
+    mark_size = 3
+    plt.plot(leftx, ploty, 'o', color='red', markersize=mark_size)
+    plt.plot(rightx, ploty, 'o', color='blue', markersize=mark_size)
+    plt.xlim(0, 1280)
+    plt.ylim(0, 720)
+    plt.plot(left_fitx, ploty, color='green', linewidth=3)
+    plt.plot(right_fitx, ploty, color='green', linewidth=3)
+    plt.gca().invert_yaxis() # to visualize as we do the images
+    
+    
+    # Define y-value where we want radius of curvature
+    # I'll choose the maximum y-value, corresponding to the bottom of the image
+    y_eval = np.max(ploty)
+    left_curverad = ((1 + (2*left_fit[0]*y_eval + left_fit[1])**2)**1.5) / np.absolute(2*left_fit[0])
+    right_curverad = ((1 + (2*right_fit[0]*y_eval + right_fit[1])**2)**1.5) / np.absolute(2*right_fit[0])
+    #print(left_curverad, right_curverad)
+    # Example values: 1926.74 1908.48
+
+    # Define conversions in x and y from pixels space to meters
+    ym_per_pix = 30/720 # meters per pixel in y dimension
+    xm_per_pix = 3.7/700 # meters per pixel in x dimension
+    
+    # Fit new polynomials to x,y in world space
+    left_fit_cr = np.polyfit(ploty*ym_per_pix, leftx*xm_per_pix, 2)
+    right_fit_cr = np.polyfit(ploty*ym_per_pix, rightx*xm_per_pix, 2)
+    # Calculate the new radii of curvature
+    left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
+    right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
+
+    # Now our radius of curvature is in meters
+    #print(left_curverad, 'm', right_curverad, 'm')
+    # Example values: 632.1 m    626.2 m
+    return left_curverad, right_curverad
+    
+
+def drawPolyfitOnImage(undistorted, warped, Minv, left_fitx, right_fitx, ploty):
+    '''
+        draws the polyfit lines as a binary image
+        sampleOneChannelImage: to sample the shape from for the target image
+        left_poly_x: x-values for the left line
+        right_poly_x: x-values for the right line
+        poly_y: y-values for both lines
+        return: binary mask of the polyfit lines
+    '''
+    
+    # Create an image to draw the lines on
+    warp_zero = np.zeros_like(warped).astype(np.uint8)
+    color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+    
+    # Recast the x and y points into usable format for cv2.fillPoly()
+    pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+    pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+    pts = np.hstack((pts_left, pts_right))
+    
+    # Draw the lane onto the warped blank image
+    cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
+    
+    # Warp the blank back to original image space using inverse perspective matrix (Minv)
+    newwarp = cv2.warpPerspective(color_warp, Minv, (undistorted.shape[1], undistorted.shape[0])) 
+    # Combine the result with the original image
+    result = cv2.addWeighted(undistorted, 1, newwarp, 0.3, 0)
+
+    return result
+
+def drawPolyfit(sampleOneChannelImage, left_poly_x, right_poly_x, poly_y):
+    '''
+        draws the polyfit lines as a binary image
+        sampleOneChannelImage: to sample the shape from for the target image
+        left_poly_x: x-values for the left line
+        right_poly_x: x-values for the right line
+        poly_y: y-values for both lines
+        return: binary mask of the polyfit lines
+    '''
+    
+    
+    # create an empty image with the same spacial shape of the source image, but with 1 color channel
+    polyfit_binary = np.zeros_like(sampleOneChannelImage)
+ 
+    # create binary    
+    for i in range(len(poly_y)):
+        for x_between in range(int(left_poly_x[i]), int(right_poly_x[i])):
+         
+            polyfit_binary[int(poly_y[i])][int(left_poly_x[i]):int(right_poly_x[i])] = 1
+ 
+    
+    return polyfit_binary
+
+def findLinesSimple(binary_warped, left_fit, right_fit):
+    
+    '''
+        searches for lines near the region where it has found lines in last frame
+        binary_warped: binary image from birds eye view
+        left_fit: polynomial coefficients of the left line
+        right_fit: polynomial coefficients of the right line
+        return: left_line_x, right_line_x, both_lines_y
+    '''
+ 
+     # Assume you now have a new warped binary image 
+    # from the next frame of video (also called "binary_warped")
+    # It's now much easier to find line pixels!
+    nonzero = binary_warped.nonzero()
+    nonzeroy = np.array(nonzero[0])
+    nonzerox = np.array(nonzero[1])
+    margin = 100
+    left_lane_inds = ((nonzerox > (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] - margin)) & (nonzerox < (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] + margin))) 
+    right_lane_inds = ((nonzerox > (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] - margin)) & (nonzerox < (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] + margin)))  
+    
+    # Again, extract left and right line pixel positions
+    leftx = nonzerox[left_lane_inds]
+    lefty = nonzeroy[left_lane_inds] 
+    rightx = nonzerox[right_lane_inds]
+    righty = nonzeroy[right_lane_inds]
+    # Fit a second order polynomial to each
+    left_fit = np.polyfit(lefty, leftx, 2)
+    right_fit = np.polyfit(righty, rightx, 2)
+    # Generate x and y values for plotting
+    ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
+    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+
+    return left_fitx, right_fitx, ploty, left_fit, right_fit
 
 def findLines(binary_warped):
+    
+    '''
+        searches for lines
+        binary_warped: binary image from birds eye view
+        return: image_with_sliding_windows, polyfit_left_x, polyfit_right_x, polyfit_y
+    '''
     
     # Assuming you have created a warped binary image called "binary_warped"
     # Take a histogram of the bottom half of the image
@@ -238,14 +524,15 @@ def findLines(binary_warped):
     
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
+    
+    plt.clf()
     plt.imshow(out_img)
     plt.plot(left_fitx, ploty, color='yellow')
     plt.plot(right_fitx, ploty, color='yellow')
     plt.xlim(0, 1280)
     plt.ylim(720, 0)
 
-    plt.show()
-    return out_img, left_fitx, right_fitx, ploty
+    return out_img, left_fitx, right_fitx, ploty, left_fit, right_fit
 
 def transformToBirdsView(img):
     '''
@@ -323,6 +610,7 @@ def transformToBirdsView(img):
     ax2.add_patch(patch)
 #    plt.show()
     
+    plt.clf()
 
     return warped, [fig, fig2], M, Minv
     

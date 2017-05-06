@@ -29,6 +29,7 @@ from moviepy.editor import VideoFileClip
 # add lib to path
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))+"/../lib")
 from helper_lane_lines import *
+from line import Line
 
 # setting etc dir
 etcDir = os.path.dirname(os.path.realpath(__file__))+'/../etc'
@@ -72,7 +73,12 @@ map_int_name = {
                     7: '07_transform2',
                     8: '08_warped_binary',
                     9: '09_histogram',
-                    10:'10_ployline',
+                    10:'10_sliding_window',
+                    11:'11_polyfit',
+                    12:'12_polyfit_unwarped',
+                    13:'13_original_polyfit',
+                    14:'14_result_with_text',
+                    False: '99_result',
                 }
 
 
@@ -131,11 +137,12 @@ ret, mtx, dist, rvecs, tvecs = calibrateCamera(args.calDir)
 #
 #----------------------
 
+leftLine = Line()
+rightLine = Line()
 
-
-def process_image(img):
-    return laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
-
+def process_image(img, leftLine=leftLine, rightLine=rightLine):
+    result, leftLine, rightLine = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, leftLine, rightLine, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
+    return result
 
 
 
@@ -143,8 +150,8 @@ if args.image:
     
     # read image
     img = mpimg.imread(args.image)
-    result = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
-
+    result, leftLine, rightLine = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, leftLine, rightLine, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
+    
     print(map_int_name[args.visLog])
     writeImage(result, args.outDir, map_int_name[args.visLog], cmap=None)
 
