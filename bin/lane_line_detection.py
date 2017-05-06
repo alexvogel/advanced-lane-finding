@@ -54,7 +54,13 @@ parser.add_argument('--visLog', metavar='INT', type=int, action='store', default
                    6=unwarped binary with polygon \
                    7=warped binary with polygon \
                    8=warped binary \
-                   9=histogram' )
+                   9=histogram \
+                   10=detected lines \
+                   11=undistorted with detected lines \
+                   12=result with text' \
+                   )
+parser.add_argument('--format', metavar='STRING', type=str, action='store', default='normal',
+                   help='setting for result image. --format=collage4, --format=collage9')
 parser.add_argument('--outDir', metavar='PATH', action='store', default='output_directory_'+str(time()),
                    help='directory for output data. must not exist at call time.')
 parser.add_argument('--calDir', metavar='PATH', action='store', required=False, default=etcDir + '/camera_cal',
@@ -73,11 +79,9 @@ map_int_name = {
                     7: '07_transform2',
                     8: '08_warped_binary',
                     9: '09_histogram',
-                    10:'10_sliding_window',
-                    11:'11_polyfit',
-                    12:'12_polyfit_unwarped',
-                    13:'13_original_polyfit',
-                    14:'14_result_with_text',
+                    10:'10_detect_lines',
+                    11:'13_undist_with_polyfit',
+                    12:'14_result_with_text',
                     False: '99_result',
                 }
 
@@ -119,7 +123,9 @@ if errors > 0:
 log('info', '--outDir='+args.outDir)
 log('info', '--calDir='+args.calDir)
 
-log('info', 'visual logging is ' + str(args.visLog))
+log('info', '--visLog=' + str(args.visLog))
+log('info', '--format=' + args.format)
+
 
 
 
@@ -141,7 +147,7 @@ leftLine = Line()
 rightLine = Line()
 
 def process_image(img, leftLine=leftLine, rightLine=rightLine):
-    result, leftLine, rightLine = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, leftLine, rightLine, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
+    result, leftLine, rightLine = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, leftLine, rightLine, args.format, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
     return result
 
 
@@ -150,7 +156,7 @@ if args.image:
     
     # read image
     img = mpimg.imread(args.image)
-    result, leftLine, rightLine = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, leftLine, rightLine, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
+    result, leftLine, rightLine = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, leftLine, rightLine, args.format, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
     
     print(map_int_name[args.visLog])
     writeImage(result, args.outDir, map_int_name[args.visLog], cmap=None)

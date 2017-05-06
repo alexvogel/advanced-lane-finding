@@ -61,7 +61,7 @@ def writeImage(item, dir, basename, cmap=None):
     
     plt.clf()
 
-def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255)):
+def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255)):
     '''
         processes an image from input to output in finding a lane line
         img: input image in bgr colorspace
@@ -76,6 +76,10 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, sobel_k
         return: image with detected-lanes-overlay
     '''
 
+    # store for the intermediate steps of the processing pipeline
+    imageBank = {}
+    imageBank[0] = rgb
+
     if retNr is 0:
         return rgb
 
@@ -83,82 +87,101 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, sobel_k
     #undistort = np.copy(rgb)
 #    log('debug', 'undistort image')
     rgb_undistort = cv2.undistort(rgb, mtx, dist, None, mtx)
+    imageBank[1] = rgb_undistort
     if retNr is 1:
         return rgb_undistort, leftLine, rightLine
 
     # convert to grayscale
 #    log('debug', 'convert to grayscale')
     gray = cv2.cvtColor(rgb_undistort, cv2.COLOR_RGB2GRAY)
+    gray_as_rgb = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
+    imageBank[2] = gray_as_rgb
     if retNr is 2:
-        return cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB), leftLine, rightLine
+        return gray_as_rgb, leftLine, rightLine
 
     # create binary mask of the thresholded magnitude of sobel operator
 #    log('debug', 'create binary mask with abs_sobelxy operator')
     binary_output_abs_sobelxy = getBinaryMagSobelXY(gray, sobel_kernel, mag_sobelxy_thresh)
+    binary_output_abs_sobelxy_as_rgb = cv2.cvtColor(binary_output_abs_sobelxy * 255, cv2.COLOR_GRAY2RGB)
+    imageBank[3] = binary_output_abs_sobelxy_as_rgb
     if retNr is 3:
-        tmp = binary_output_abs_sobelxy * 255
-        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB), leftLine, rightLine
+        return binary_output_abs_sobelxy_as_rgb, leftLine, rightLine
 
     # create binary mask of the thresholded s of the colorspace hls
 #    log('debug', 'create binary mask with the s of the HLS color space')
     binary_output_s_of_hls = getBinarySHls(rgb_undistort, hls_thresh)
+    binary_output_s_of_hls_as_rgb = cv2.cvtColor(binary_output_s_of_hls * 255, cv2.COLOR_GRAY2RGB)
+    imageBank[4] = binary_output_s_of_hls_as_rgb
     if retNr is 4:
-        tmp = binary_output_s_of_hls * 255
-        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB), leftLine, rightLine
+        return binary_output_s_of_hls_as_rgb, leftLine, rightLine
 
     # create a combined binary (gradient and colorspace)
 #    log('debug', 'combine sobel and s binary mask to a single binary mask')
     binary_combined = combineBinaries([binary_output_abs_sobelxy, binary_output_s_of_hls])
+    binary_combined_as_rgb = cv2.cvtColor(binary_combined * 255, cv2.COLOR_GRAY2RGB)
+    imageBank[5] = binary_combined_as_rgb
     if retNr is 5:
-        tmp = binary_combined * 255
-        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB), leftLine, rightLine
+        return binary_combined_as_rgb, leftLine, rightLine
 
     # warp image from camera view to birds eye view
 #    log('debug', 'transform image from camera view to birds eye view')
     binary_combined_warped, figs, M, Minv = transformToBirdsView(binary_combined)
+
+    figs[0].canvas.draw() # draw the canvas, cache the renderer
+    tmp = np.fromstring(figs[0].canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    unwarped_binary_with_polygon = tmp.reshape(figs[0].canvas.get_width_height()[::-1] + (3,))
+    imageBank[6] = unwarped_binary_with_polygon
     if retNr is 6:
-        figs[0].canvas.draw() # draw the canvas, cache the renderer
-        tmp = np.fromstring(figs[0].canvas.tostring_rgb(), dtype=np.uint8, sep='')
-        tmp2 = tmp.reshape(figs[0].canvas.get_width_height()[::-1] + (3,))
-        return tmp2, leftLine, rightLine
+        return unwarped_binary_with_polygon, leftLine, rightLine
+
+    figs[1].canvas.draw() # draw the canvas, cache the renderer
+    tmp = np.fromstring(figs[1].canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    warped_binary_with_polygon = tmp.reshape(figs[1].canvas.get_width_height()[::-1] + (3,))
+    imageBank[7] = warped_binary_with_polygon
     if retNr is 7:
-        figs[1].canvas.draw() # draw the canvas, cache the renderer
-        tmp = np.fromstring(figs[1].canvas.tostring_rgb(), dtype=np.uint8, sep='')
-        tmp2 = tmp.reshape(figs[1].canvas.get_width_height()[::-1] + (3,))
-        return tmp2, leftLine, rightLine
+        return warped_binary_with_polygon, leftLine, rightLine
+     
+    binary_combined_warped_as_rgb = cv2.cvtColor(binary_combined_warped * 255, cv2.COLOR_GRAY2RGB)
+    imageBank[8] = binary_combined_warped_as_rgb
     if retNr is 8:
-        tmp = binary_combined_warped * 255
-        return cv2.cvtColor(tmp, cv2.COLOR_GRAY2RGB), leftLine, rightLine
+        return binary_combined_warped_as_rgb, leftLine, rightLine
     
     # take a histogram along all the columns in the lower half of the image
     histogram = np.sum(binary_combined_warped[binary_combined_warped.shape[0]//2:, :], axis=0)
+    plt.clf()
+    fig = plt.figure(1)
+    ax = plt.axes()
+    plt.plot(histogram)
+    fig.canvas.draw()
+    tmp = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    histogram_as_rgb = tmp.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    imageBank[9] = histogram_as_rgb
     if retNr is 9:
-        plt.clf()
-        fig = plt.figure(1)
-        ax = plt.axes()
-        plt.plot(histogram)
-        fig.canvas.draw()
-        tmp = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-        tmp2 = tmp.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-        return tmp2, leftLine, rightLine
+        return histogram_as_rgb, leftLine, rightLine
 
     # calc lane width
     widthMeter = calcLaneWidth(leftLine, rightLine)
 
     # detect Lines
-    if leftLine.isDetected() and rightLine.isDetected() and isLaneWidthPlausible(widthMeter):
-        left_line_x, right_line_x, both_lines_y, left_poly_coeff, right_poly_coeff = findLinesSimple(binary_combined_warped, leftLine.getBestPolyCoeff(), rightLine.getBestPolyCoeff())
+#    if leftLine.isDetected() and rightLine.isDetected() and isLaneWidthPlausible(widthMeter):
+    if False:
+        detected_or_sliding_window = left_poly_coeff, right_poly_coeff = findLinesSimple(binary_combined_warped, leftLine.getBestPolyCoeff(), rightLine.getBestPolyCoeff())
     else:
-        # finding the lines
-        sliding_window, left_line_x, right_line_x, both_lines_y, left_poly_coeff, right_poly_coeff = findLines(binary_combined_warped)
+        # finding the lines with sliding window
+        detected_or_sliding_window, left_poly_coeff, right_poly_coeff = findLines(binary_combined_warped)
+
+    imageBank[10] = detected_or_sliding_window
+    if retNr is 10:
+        return detected_or_sliding_window, leftLine, rightLine
 
     # set the coeffs
     leftLine.setDetected(True)
     rightLine.setDetected(True)
     leftLine.setCurrentPolyCoeff(left_poly_coeff)
     rightLine.setCurrentPolyCoeff(right_poly_coeff)
-    leftLine.setXAndPolyCoeff(left_line_x[-1], left_poly_coeff)
-    rightLine.setXAndPolyCoeff(right_line_x[-1], right_poly_coeff)
+
+    # generate x-y-values for plotting the lines
+    left_line_x, right_line_x, both_lines_y = generateLineXYValues(rgb, leftLine.getBestPolyCoeff(), rightLine.getBestPolyCoeff())
 
     # calculate radius of lane
     leftRadiusMeter, rightRadiusMeter = calcRadius(left_line_x, right_line_x)
@@ -167,6 +190,7 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, sobel_k
     
     # draw the polyfitted lines on undistorted original image
     polyfit_on_undistorted = drawPolyfitOnImage(rgb_undistort, binary_combined_warped, Minv, left_line_x, right_line_x, both_lines_y)
+    imageBank[11] = polyfit_on_undistorted
     if retNr is 11:
         return polyfit_on_undistorted
     
@@ -177,10 +201,33 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, sobel_k
 
     # write text on image
     resultImage = writeText(polyfit_on_undistorted, (leftRadiusMeter+rightRadiusMeter)/2, vehicleCenterDeviation, widthMeter)
-    if retNr is 14:
+    imageBank[12] = resultImage
+    if retNr is 12:
         return resultImage, leftLine, rightLine
     
+    if format == 'collage4':
+        return genCollage(4, imageBank), leftLine, rightLine
+    elif format == 'collage9':
+        return genCollage(9, imageBank), leftLine, rightLine
+    
+    imageBank.clear()
+    
     return resultImage, leftLine, rightLine
+
+def genCollage(amount, imageBank):
+    '''
+        generating a 2x2 or 3x3 collage
+        amount: 4 -> 2x2 collage; 9 _> 3x3 collage
+        return: imageCollage
+    '''
+    resultImage = None
+    
+    if amount == 4:
+        row1 = cv2.hconcat((imageBank[1], imageBank[5]))
+        row2 = cv2.hconcat((imageBank[10], imageBank[12]))
+        resultImage = cv2.vconcat((row1, row2))
+    
+    return resultImage
 
 def calcVehicleDeviation(left_poly_x, right_poly_x, poly_y):
     '''
@@ -392,6 +439,21 @@ def drawPolyfit(sampleOneChannelImage, left_poly_x, right_poly_x, poly_y):
     
     return polyfit_binary
 
+def generateLineXYValues(sampleImage, left_poly_coeff, right_poly_coeff):
+    '''
+        generate x and y values from polyfit coefficients
+        sampleImage: sample image of right shape
+        left_poly_coeff: polyfit coefficients for the left line
+        right_poly_coeff: polyfit coefficients for the right line
+        return: left_x, right_x, plot_y
+    '''
+    # Generate x and y values for plotting
+    ploty = np.linspace(0, sampleImage.shape[0]-1, sampleImage.shape[0] )
+    left_fitx = left_poly_coeff[0]*ploty**2 + left_poly_coeff[1]*ploty + left_poly_coeff[2]
+    right_fitx = right_poly_coeff[0]*ploty**2 + right_poly_coeff[1]*ploty + right_poly_coeff[2]
+
+    return left_fitx, right_fitx, ploty
+
 def findLinesSimple(binary_warped, left_fit, right_fit):
     
     '''
@@ -420,12 +482,19 @@ def findLinesSimple(binary_warped, left_fit, right_fit):
     # Fit a second order polynomial to each
     left_fit = np.polyfit(lefty, leftx, 2)
     right_fit = np.polyfit(righty, rightx, 2)
-    # Generate x and y values for plotting
-    ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
-    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
 
-    return left_fitx, right_fitx, ploty, left_fit, right_fit
+#     # Generate x and y values for plotting
+#     ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
+#     left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+#     right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+
+    # Create an output image to draw on and  visualize the result
+    out_img = np.dstack((binary_warped, binary_warped, binary_warped))*255
+    
+    for i in range(0, ploty):
+        out_img[ploty[i], left_fitx[i]:right_fitx[i]] = [0, 0, 255]
+
+    return out_img, left_fit, right_fit
 
 def findLines(binary_warped):
     
@@ -517,22 +586,22 @@ def findLines(binary_warped):
     right_fit = np.polyfit(righty, rightx, 2)
 
     # visualize it
-    # Generate x and y values for plotting
-    ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
-    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+#     # Generate x and y values for plotting
+#     ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
+#     left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+#     right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
     
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
     
-    plt.clf()
-    plt.imshow(out_img)
-    plt.plot(left_fitx, ploty, color='yellow')
-    plt.plot(right_fitx, ploty, color='yellow')
-    plt.xlim(0, 1280)
-    plt.ylim(720, 0)
+#     plt.clf()
+#     plt.imshow(out_img)
+#     plt.plot(left_fitx, ploty, color='yellow')
+#     plt.plot(right_fitx, ploty, color='yellow')
+#     plt.xlim(0, 1280)
+#     plt.ylim(720, 0)
 
-    return out_img, left_fitx, right_fitx, ploty, left_fit, right_fit
+    return out_img, left_fit, right_fit
 
 def transformToBirdsView(img):
     '''
