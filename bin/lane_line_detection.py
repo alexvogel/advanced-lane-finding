@@ -44,6 +44,10 @@ parser.add_argument('--image', metavar='PATH', type=str, nargs='?', required=Fal
                    help='image from a front facing camera. to detect lane lines')
 parser.add_argument('--video', metavar='PATH', type=str, nargs='?', required=False,
                    help='video from a front facing camera. to detect lane lines')
+parser.add_argument('--startTime', metavar='INT', type=int, nargs='?', required=False,
+                   help='while developing the image pipeline it can be helpful to focus on the difficult parts of an video, so to start at processing at a certain time. e.g. 25 for 25 seconds after begin.')
+parser.add_argument('--endTime', metavar='INT', type=int, nargs='?', required=False,
+                   help='to end processing video at a certain time, use this argument. e.g. 30 for end processing 30 seconds after video begin.')
 parser.add_argument('--visLog', metavar='INT', type=int, action='store', default=False,
                    help='for debugging or documentation of the pipeline. \
                    1=undistorted image \
@@ -60,7 +64,7 @@ parser.add_argument('--visLog', metavar='INT', type=int, action='store', default
                    12=result with text' \
                    )
 parser.add_argument('--format', metavar='STRING', type=str, action='store', default='normal',
-                   help='setting for result image. --format=collage4, --format=collage9')
+                   help='to visualize single steps of the image pipeline, use this argument. --format=collage4, --format=collage9 creates a collage of images instead of the result image')
 parser.add_argument('--outDir', metavar='PATH', action='store', default='output_directory_'+str(time()),
                    help='directory for output data. must not exist at call time.')
 parser.add_argument('--calDir', metavar='PATH', action='store', required=False, default=etcDir + '/camera_cal',
@@ -116,6 +120,11 @@ if os.path.isdir(args.outDir):
     log('error', 'output directory already exists. please delete or rename:' + args.outDir)
     errors += 1
 
+# check if format is normal|collage4|collage9
+if args.format != 'normal' and args.format != 'collage4' and args.format != 'collage9':
+    log('error', '--format=' + args.format + ' does not exist. try --help for help')
+    errors += 1
+
 if errors > 0:
     log('fatal', str(errors) + ' error(s) occured. please correct and try again.')
     sys.exit(1)
@@ -163,8 +172,19 @@ if args.image:
 
 if args.video:
     video_output = args.outDir + '/video_out.mp4'
-    clip1 = VideoFileClip(args.video, audio=False)
-    white_clip = clip1.fl_image(process_image) #NOTE: this function expects color images!!
+    clip = VideoFileClip(args.video, audio=False)
+
+    subclip = None
+    if args.startTime and args.endTime:
+        subclip = clip.subclip(args.startTime, args.endTime)
+    elif args.startTime:
+        subclip = clip.subclip(t_start=args.startTime)
+    elif args.endTime:
+        subclip = clip.subclip(t_start=args.endTime)
+    else:
+        subclip = clip
+
+    white_clip = subclip.fl_image(process_image) #NOTE: this function expects color images!!
     
     if not os.path.isdir(args.outDir):
         log('info', 'creating output directory: ' + args.outDir)

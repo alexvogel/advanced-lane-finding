@@ -129,14 +129,14 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
 
     figs[0].canvas.draw() # draw the canvas, cache the renderer
     tmp = np.fromstring(figs[0].canvas.tostring_rgb(), dtype=np.uint8, sep='')
-    unwarped_binary_with_polygon = tmp.reshape(figs[0].canvas.get_width_height()[::-1] + (3,))
+    unwarped_binary_with_polygon = cv2.resize(tmp.reshape(figs[0].canvas.get_width_height()[::-1] + (3,)), (rgb_undistort.shape[1], rgb_undistort.shape[0]))
     imageBank[6] = unwarped_binary_with_polygon
     if retNr is 6:
         return unwarped_binary_with_polygon, leftLine, rightLine
 
     figs[1].canvas.draw() # draw the canvas, cache the renderer
     tmp = np.fromstring(figs[1].canvas.tostring_rgb(), dtype=np.uint8, sep='')
-    warped_binary_with_polygon = tmp.reshape(figs[1].canvas.get_width_height()[::-1] + (3,))
+    warped_binary_with_polygon = cv2.resize(tmp.reshape(figs[1].canvas.get_width_height()[::-1] + (3,)), (rgb_undistort.shape[1], rgb_undistort.shape[0]))
     imageBank[7] = warped_binary_with_polygon
     if retNr is 7:
         return warped_binary_with_polygon, leftLine, rightLine
@@ -154,7 +154,7 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     plt.plot(histogram)
     fig.canvas.draw()
     tmp = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-    histogram_as_rgb = tmp.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    histogram_as_rgb = cv2.resize(tmp.reshape(fig.canvas.get_width_height()[::-1] + (3,)), (rgb_undistort.shape[1], rgb_undistort.shape[0]))
     imageBank[9] = histogram_as_rgb
     if retNr is 9:
         return histogram_as_rgb, leftLine, rightLine
@@ -210,7 +210,6 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     elif format == 'collage9':
         return genCollage(9, imageBank), leftLine, rightLine
     
-    imageBank.clear()
     
     return resultImage, leftLine, rightLine
 
@@ -226,6 +225,12 @@ def genCollage(amount, imageBank):
         row1 = cv2.hconcat((imageBank[1], imageBank[5]))
         row2 = cv2.hconcat((imageBank[10], imageBank[12]))
         resultImage = cv2.vconcat((row1, row2))
+    
+    elif amount == 9:
+        row1 = cv2.hconcat((imageBank[1], imageBank[2], imageBank[4]))
+        row2 = cv2.hconcat((imageBank[5], imageBank[6], imageBank[8]))
+        row3 = cv2.hconcat((imageBank[9], imageBank[10], imageBank[12]))
+        resultImage = cv2.vconcat((row1, row2, row3))
     
     return resultImage
 
@@ -623,7 +628,7 @@ def transformToBirdsView(img):
                         [ src_xindent_upper,                src_yindent_upper ] ] ) # left upper corner
     
     # define destination points
-    dst_xindent_lower = 300
+    dst_xindent_lower = 200
 
     # define destination points for transformation
     dst = np.float32( [[ dst_xindent_lower,                img.shape[0] ],     # left lower corner
