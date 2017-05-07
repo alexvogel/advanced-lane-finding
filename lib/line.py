@@ -23,7 +23,7 @@ class Line():
         #polynomial coefficients for the most recent fit
         self.current_poly_coeff = None 
         #polynomial coefficients of the last n fits
-        self.recent_poly_coeff = deque([])
+        self.recent_poly_coeff = []
 
         #radius of curvature of the line in some units
         self.radius_of_curvature = None 
@@ -45,15 +45,6 @@ class Line():
     def setDetected(self, boolDetected):
         self.detected = boolDetected
     
-    def setXAndPolyCoeff(self, x, poly_coeff):
-        self.x = x
-        self.xhistory.append(x)
-        self.recent_xfitted.append(x)
-        if len(self.recent_xfitted) > self.n:
-            self.recent_xfitted.popleft()
-        self.bestx = sum(self.recent_xfitted)/float(len(self.recent_xfitted))
-    
-        self.setCurrentPolyCoeff(poly_coeff)
 #     def setRecentXFit(self, fitx):
 #         self.addRecentXFitted(fitx)
 #         self.addHistoryXFitted(fitx)
@@ -73,10 +64,14 @@ class Line():
         
         self.recent_poly_coeff.append(poly_coeff)
         if len(self.recent_poly_coeff) > self.n:
-            self.recent_poly_coeff.popleft()
+            self.recent_poly_coeff.pop()
         
-        # calc the average poly_coeff
-        self.best_poly_coeff = sum(self.recent_poly_coeff)/len(self.recent_poly_coeff)
+        if len(self.recent_poly_coeff) > 1:
+            # calc the average poly_coeff
+            self.best_poly_coeff = sum(self.recent_poly_coeff) / len(self.recent_poly_coeff)
+        
+        else:
+            self.best_poly_coeff = poly_coeff
         
     def setRadiusOfCurvature(self, radiusMeter):
         self.radius_of_curvature = radiusMeter
@@ -90,6 +85,9 @@ class Line():
     
     def getBestPolyCoeff(self):
         return self.best_poly_coeff
+
+    def getRecentPolyCoeff(self):
+        return self.recent_poly_coeff
 
     def getX(self):
         return self.x

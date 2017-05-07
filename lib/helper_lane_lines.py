@@ -163,8 +163,8 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     widthMeter = calcLaneWidth(leftLine, rightLine)
 
     # detect Lines
-#    if leftLine.isDetected() and rightLine.isDetected() and isLaneWidthPlausible(widthMeter):
-    if False:
+    if leftLine.isDetected() and rightLine.isDetected() and isLaneWidthPlausible(widthMeter):
+#    if False:
         detected_or_sliding_window = left_poly_coeff, right_poly_coeff = findLinesSimple(binary_combined_warped, leftLine.getBestPolyCoeff(), rightLine.getBestPolyCoeff())
     else:
         # finding the lines with sliding window
@@ -174,11 +174,15 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     if retNr is 10:
         return detected_or_sliding_window, leftLine, rightLine
 
+    # if one line is faulty recognized and jumps 
+    left_poly_coeff_smooth, right_poly_coeff_smooth = smoothPolyCoeff(leftLine, rightLine, left_poly_coeff, right_poly_coeff)
+
     # set the coeffs
     leftLine.setDetected(True)
     rightLine.setDetected(True)
-    leftLine.setCurrentPolyCoeff(left_poly_coeff)
-    rightLine.setCurrentPolyCoeff(right_poly_coeff)
+    leftLine.setCurrentPolyCoeff(left_poly_coeff_smooth)
+    rightLine.setCurrentPolyCoeff(right_poly_coeff_smooth)
+    
 
     # generate x-y-values for plotting the lines
     left_line_x, right_line_x, both_lines_y = generateLineXYValues(rgb, leftLine.getBestPolyCoeff(), rightLine.getBestPolyCoeff())
@@ -459,6 +463,37 @@ def generateLineXYValues(sampleImage, left_poly_coeff, right_poly_coeff):
 
     return left_fitx, right_fitx, ploty
 
+
+def smoothPolyCoeff(leftLine, rightLine, left_poly_coeff, right_poly_coeff):
+    '''
+        if one polyfit jumps and the other remains pretty much the same as in the last timestep
+        the jumping one will be substituted by a parallel copy of the steady one
+    '''
+    
+    if (len(leftLine.getRecentPolyCoeff()) > 0):
+        print('full coeffs:', left_poly_coeff)
+        print('3rd coeffs:', left_poly_coeff[2])
+        print('full recent coeffs:', leftLine.getRecentPolyCoeff()[-1])
+        print('3rd coeffs:', leftLine.getRecentPolyCoeff()[-1][2])
+        
+        leftChangePx = left_poly_coeff[2] - leftLine.getRecentPolyCoeff()[-1][2]
+        rightChangePx = right_poly_coeff[2] - rightLine.getRecentPolyCoeff()[-1][2]
+    
+        print('change of left line:', leftChangePx)
+        print('change of right line:', rightChangePx)
+    
+        # if the lines are diverging
+        if leftChangePx - rightChangePx > 30:
+            print('its a jump!')
+            
+            # the line with the biggest change is considered faulty
+            if abs(leftChangePx) > abs(rightChangePx):
+                # left line faulty
+                # overwrite the faulty left poly coeffs with the poly coeffs of the right
+                left_poly_coeff[2] = right_poly_coeff[2]
+        
+    return left_poly_coeff, right_poly_coeff
+
 def findLinesSimple(binary_warped, left_fit, right_fit):
     
     '''
@@ -628,7 +663,7 @@ def transformToBirdsView(img):
                         [ src_xindent_upper,                src_yindent_upper ] ] ) # left upper corner
     
     # define destination points
-    dst_xindent_lower = 200
+    dst_xindent_lower = 250
 
     # define destination points for transformation
     dst = np.float32( [[ dst_xindent_lower,                img.shape[0] ],     # left lower corner
