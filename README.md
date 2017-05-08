@@ -19,8 +19,8 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/undistort_output.png "Undistorted"
-[image2]: ./test_images/test1.jpg "Road Transformed"
+[image1]: ./media_readme/test1.jpg "Input Image"
+[image2]: ./media_readme/result_test1.png "Result Image"
 [image3]: ./examples/binary_combo_example.jpg "Binary Example"
 [image4]: ./examples/warped_straight_lines.jpg "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
@@ -39,11 +39,86 @@ The goals / steps of this project are the following:
 
 You're reading it!
 
+### 2. Code And Data Setup
+
+The code for this project is composed of 3 files:
+
+main script:     bin/lane_line_detection.py
+helper module:   lib/helper_lane_lines.py
+tracking module: lib/line.py
+
+The images for camera calibration is located in the etc directory
+
+calibration images: etc/camera_cal
+
+The input data is located in the inp directory
+
+test images:     inp/img/test_images
+test videos:     inp/vid
+
+usage: lane_line_detection.py [-h] [--image [PATH]] [--video [PATH]]
+                              [--startTime [INT]] [--endTime [INT]]
+                              [--visLog INT] [--format STRING] [--outDir PATH]
+                              [--calDir PATH]
+
+a tool for detecting lane lines in images and videos
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --image [PATH]     image from a front facing camera. to detect lane lines
+  --video [PATH]     video from a front facing camera. to detect lane lines
+  --startTime [INT]  while developing the image pipeline it can be helpful to
+                     focus on the difficult parts of an video, so to start at
+                     processing at a certain time. e.g. 25 for 25 seconds
+                     after begin.
+  --endTime [INT]    to end processing video at a certain time, use this
+                     argument. e.g. 30 for end processing 30 seconds after
+                     video begin.
+  --visLog INT       for debugging or documentation of the pipeline.
+                     1=undistorted image 2=grayscale 3=binary mask magnitude
+                     sobel xy 4=hls binary mask 5=combination of binary masks
+                     6=unwarped binary with polygon 7=warped binary with
+                     polygon 8=warped binary 9=histogram 10=detected lines
+                     11=undistorted with detected lines 12=result with text
+  --format STRING    to visualize single steps of the image pipeline, use this
+                     argument. --format=collage4, --format=collage9 creates a
+                     collage of images instead of the result image
+  --outDir PATH      directory for output data. must not exist at call time.
+  --calDir PATH      directory for camera calibration images. directory must
+                     only contain chessboard 9x6 calibration images.
+
+example call for processing an image:
+python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg
+![input image][image1]![result image][image1]
+
+example call for processing an image and output a certain step of the image pipeline instead of the end result:
+python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg --visLog 4
+![input image][image1]![binary image][image1]
+
+example call for processing a video:
+python bin/lane_line_detection.py --image inp/vid/project_video.mp4
+[![result video](https://img.youtube.com/vi/rZhzEHPJmtQ/0.jpg)](https://www.youtube.com/watch?v=rZhzEHPJmtQ "Video Title")
+
+example call for processing only the part of a video between 38 and 45 seconds:
+python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --startTime 38 --endTime 45
+
+example call for processing a video and output a certain step of the image pipeline instead of the end result:
+python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --visLog 4
+[![result video](https://img.youtube.com/vi/rZhzEHPJmtQ/0.jpg)](https://www.youtube.com/watch?v=rZhzEHPJmtQ "Video Title")
+
+example call for processing a video and output 4 important steps of the image pipeline instead of the end result:
+python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --format collage4
+[![result video](https://img.youtube.com/vi/rZhzEHPJmtQ/0.jpg)](https://www.youtube.com/watch?v=rZhzEHPJmtQ "Video Title")
+
+example call for processing a video and output 9 important steps of the image pipeline instead of the end result:
+python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --format collage9
+[![result video](https://img.youtube.com/vi/rZhzEHPJmtQ/0.jpg)](https://www.youtube.com/watch?v=rZhzEHPJmtQ "Video Title")
+
 ### Camera Calibration
 
 #### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 
-The code for this step is contained in the first code cell of the IPython notebook located in "./examples/example.ipynb" (or in lines # through # of the file called `some_file.py`).  
+The code for this step is contained in the calibrateCamera function of the file bin/helper_lane_lines.py first code cell of the IPython notebook located in "./examples/example.ipynb" (or in lines # through # of the file called `some_file.py`).  
 
 I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
