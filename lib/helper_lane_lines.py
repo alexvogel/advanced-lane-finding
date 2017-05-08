@@ -188,7 +188,7 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     left_line_x, right_line_x, both_lines_y = generateLineXYValues(rgb, leftLine.getBestPolyCoeff(), rightLine.getBestPolyCoeff())
 
     # calculate radius of lane
-    leftRadiusMeter, rightRadiusMeter = calcRadius(left_line_x, right_line_x)
+    leftRadiusMeter, rightRadiusMeter = calcRadius(left_line_x, right_line_x, both_lines_y)
     leftLine.setRadiusOfCurvature(leftRadiusMeter)
     rightLine.setRadiusOfCurvature(rightRadiusMeter)
     
@@ -330,29 +330,30 @@ def writeText(img, curvatureMeter, vehicleCenterDeviation, laneWidth, correction
     
     cv2.putText(img, 'Radius of Curvature = '+str(int(curvatureMeter))+'m', (50, 50), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
     cv2.putText(img, 'Vehicle is '+'{:4.2f}'.format(abs(vehicleCenterDeviation))+'m '+dir+' of center', (50, 80), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
-    cv2.putText(img, correctionStatement, (50, 110), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
-    if laneWidth != None:
-        cv2.putText(img, 'Lane Width is '+'{:4.2f}'.format(laneWidth)+'m ', (50, 140), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+#     cv2.putText(img, correctionStatement, (50, 110), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+#     if laneWidth != None:
+#         cv2.putText(img, 'Lane Width is '+'{:4.2f}'.format(laneWidth)+'m ', (50, 140), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
    
     return img
     
 
-def calcRadius(leftx, rightx):
+def calcRadius(leftx, rightx, ploty):
     '''
         calculate the radius of the left and the right line
         leftx: x-values for the left line
         rightx: x-values for the right line
+        ploty: y-values for both lines
         return: leftRadius, rightRadius
     '''
     # Generate some fake data to represent lane-line pixels
-    ploty = np.linspace(0, 719, num=720)# to cover same y-range as image
-    quadratic_coeff = 3e-4 # arbitrary quadratic coefficient
+#    ploty = np.linspace(0, 719, num=720)# to cover same y-range as image
+#    quadratic_coeff = 3e-4 # arbitrary quadratic coefficient
     # For each y position generate random x position within +/-50 pix
     # of the line base position in each case (x=200 for left, and x=900 for right)
-    leftx = np.array([200 + (y**2)*quadratic_coeff + np.random.randint(-50, high=51) 
-                                  for y in ploty])
-    rightx = np.array([900 + (y**2)*quadratic_coeff + np.random.randint(-50, high=51) 
-                                    for y in ploty])
+#    leftx = np.array([200 + (y**2)*quadratic_coeff + np.random.randint(-50, high=51) 
+#                                  for y in ploty])
+#    rightx = np.array([900 + (y**2)*quadratic_coeff + np.random.randint(-50, high=51) 
+#                                    for y in ploty])
     
     leftx = leftx[::-1]  # Reverse to match top-to-bottom in y
     rightx = rightx[::-1]  # Reverse to match top-to-bottom in y
