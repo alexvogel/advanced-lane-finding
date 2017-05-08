@@ -34,8 +34,8 @@ from line import Line
 # setting etc dir
 etcDir = os.path.dirname(os.path.realpath(__file__))+'/../etc'
 
-version = "0.1"
-date = "2017-04-27"
+version = "0.2"
+date = "2017-05-08"
 
 # Definieren der Kommandozeilenparameter
 parser = argparse.ArgumentParser(description='a tool for detecting lane lines in images and videos',

@@ -498,7 +498,7 @@ def smoothPolyCoeff(leftLine, rightLine, left_poly_coeff, right_poly_coeff):
                 # left line faulty
                 # overwrite the faulty left poly coeffs with the poly coeffs of the right
 #                 print('left is faulty')
-                left_poly_coeff = leftLine.getRecentPolyCoeff()[-1]
+                left_poly_coeff = leftLine.getBestPolyCoeff()
                 
                 # get the 3rd coeff of last frame
 #                left_poly_coeff[2] = leftLine.getRecentPolyCoeff()[-1][2]
@@ -510,7 +510,7 @@ def smoothPolyCoeff(leftLine, rightLine, left_poly_coeff, right_poly_coeff):
             else:
                 # right is faulty
 #                 print('right is faulty')
-                right_poly_coeff = rightLine.getRecentPolyCoeff()[-1]
+                right_poly_coeff = rightLine.getBestPolyCoeff()
                 # get the coeffs of last frame
 #                right_poly_coeff[2] = rightLine.getRecentPolyCoeff()[-1][2]
                 # overwrite the 1st and 2nd coeff with the values of the left line
