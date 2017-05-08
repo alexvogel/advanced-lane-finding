@@ -89,35 +89,28 @@ optional arguments:
   --outDir PATH      directory for output data. must not exist at call time.
   --calDir PATH      directory for camera calibration images. directory must
                      only contain chessboard 9x6 calibration images.
-```
 
 example call for processing an image:
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg
-![input image][image1] ![result image][image2]
 
 example call for processing an image and output a certain step of the image pipeline instead of the end result:
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg --visLog 4
-![input image][image1]![binary image][image1]
 
 example call for processing a video:
 python bin/lane_line_detection.py --image inp/vid/project_video.mp4
-[![result video](https://img.youtube.com/vi/rZhzEHPJmtQ/0.jpg)](https://www.youtube.com/watch?v=rZhzEHPJmtQ "Video Title")
 
 example call for processing only the part of a video between 38 and 45 seconds:
 python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --startTime 38 --endTime 45
 
 example call for processing a video and output a certain step of the image pipeline instead of the end result:
 python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --visLog 4
-[![result video](https://img.youtube.com/vi/rZhzEHPJmtQ/0.jpg)](https://www.youtube.com/watch?v=rZhzEHPJmtQ "Video Title")
 
 example call for processing a video and output 4 important steps of the image pipeline instead of the end result:
 python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --format collage4
-[![result video](https://img.youtube.com/vi/rZhzEHPJmtQ/0.jpg)](https://www.youtube.com/watch?v=rZhzEHPJmtQ "Video Title")
 
 example call for processing a video and output 9 important steps of the image pipeline instead of the end result:
 python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --format collage9
-[![result video](https://img.youtube.com/vi/rZhzEHPJmtQ/0.jpg)](https://www.youtube.com/watch?v=rZhzEHPJmtQ "Video Title")
-
+```
 ### Camera Calibration
 
 #### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
