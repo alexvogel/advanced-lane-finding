@@ -19,8 +19,8 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./media_readme/test1.jpg "Input Image"
-[image2]: ./media_readme/result_test1.png "Result Image"
+[image1]: ./readme_media/test1.jpg "Input Image"
+[image2]: ./readme_media/result_test1.png "Result Image"
 [image3]: ./examples/binary_combo_example.jpg "Binary Example"
 [image4]: ./examples/warped_straight_lines.jpg "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
@@ -93,8 +93,7 @@ optional arguments:
 
 example call for processing an image:
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg
-![input image][image1]
-![result image][image2]
+![input image][image1] ![result image][image2]
 
 example call for processing an image and output a certain step of the image pipeline instead of the end result:
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg --visLog 4
