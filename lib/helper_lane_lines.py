@@ -165,7 +165,7 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     # detect Lines
     if leftLine.isDetected() and rightLine.isDetected() and isLaneWidthPlausible(widthMeter):
 #    if False:
-        detected_or_sliding_window = left_poly_coeff, right_poly_coeff = findLinesSimple(binary_combined_warped, leftLine.getBestPolyCoeff(), rightLine.getBestPolyCoeff())
+         detected_or_sliding_window, left_poly_coeff, right_poly_coeff = findLinesSimple(binary_combined_warped, leftLine.getBestPolyCoeff(), rightLine.getBestPolyCoeff())
     else:
         # finding the lines with sliding window
         detected_or_sliding_window, left_poly_coeff, right_poly_coeff = findLines(binary_combined_warped)
@@ -175,7 +175,7 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
         return detected_or_sliding_window, leftLine, rightLine
 
     # if one line is faulty recognized and jumps 
-    left_poly_coeff_smooth, right_poly_coeff_smooth = smoothPolyCoeff(leftLine, rightLine, left_poly_coeff, right_poly_coeff)
+    left_poly_coeff_smooth, right_poly_coeff_smooth, correctionStatement = smoothPolyCoeff(leftLine, rightLine, left_poly_coeff, right_poly_coeff)
 
     # set the coeffs
     leftLine.setDetected(True)
@@ -204,7 +204,7 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     rightLine.setLineBasePos(vehicleCenterDeviation)
 
     # write text on image
-    resultImage = writeText(polyfit_on_undistorted, (leftRadiusMeter+rightRadiusMeter)/2, vehicleCenterDeviation, widthMeter)
+    resultImage = writeText(polyfit_on_undistorted, (leftRadiusMeter+rightRadiusMeter)/2, vehicleCenterDeviation, widthMeter, correctionStatement)
     imageBank[12] = resultImage
     if retNr is 12:
         return resultImage, leftLine, rightLine
@@ -225,16 +225,19 @@ def genCollage(amount, imageBank):
     '''
     resultImage = None
     
+
     if amount == 4:
         row1 = cv2.hconcat((imageBank[1], imageBank[5]))
         row2 = cv2.hconcat((imageBank[10], imageBank[12]))
         resultImage = cv2.vconcat((row1, row2))
+        resultImage = cv2.resize(resultImage, (1920, int((1920/resultImage.shape[1]) * resultImage.shape[0])))
     
     elif amount == 9:
         row1 = cv2.hconcat((imageBank[1], imageBank[2], imageBank[4]))
         row2 = cv2.hconcat((imageBank[5], imageBank[6], imageBank[8]))
         row3 = cv2.hconcat((imageBank[9], imageBank[10], imageBank[12]))
         resultImage = cv2.vconcat((row1, row2, row3))
+        resultImage = cv2.resize(resultImage, (1920, int((1920/resultImage.shape[1]) * resultImage.shape[0])))
     
     return resultImage
 
@@ -312,7 +315,7 @@ def isLaneWidthPlausible(widthMeter):
     
     return result
     
-def writeText(img, curvatureMeter, vehicleCenterDeviation, laneWidth):
+def writeText(img, curvatureMeter, vehicleCenterDeviation, laneWidth, correctionStatement):
     '''
         writes the lane curvature onto the image
         img: image
@@ -327,8 +330,9 @@ def writeText(img, curvatureMeter, vehicleCenterDeviation, laneWidth):
     
     cv2.putText(img, 'Radius of Curvature = '+str(int(curvatureMeter))+'m', (50, 50), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
     cv2.putText(img, 'Vehicle is '+'{:4.2f}'.format(abs(vehicleCenterDeviation))+'m '+dir+' of center', (50, 80), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
-    if laneWidth:
-        cv2.putText(img, 'Lane Width is '+'{:4.2f}'.format(laneWidth)+'m ', (50, 110), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+    cv2.putText(img, correctionStatement, (50, 110), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+    if laneWidth != None:
+        cv2.putText(img, 'Lane Width is '+'{:4.2f}'.format(laneWidth)+'m ', (50, 140), font, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
    
     return img
     
@@ -470,6 +474,8 @@ def smoothPolyCoeff(leftLine, rightLine, left_poly_coeff, right_poly_coeff):
         the jumping one will be substituted by a parallel copy of the steady one
     '''
     
+    statement = "no correction"
+
     if (len(leftLine.getRecentPolyCoeff()) > 0):
         print('full coeffs:', left_poly_coeff)
         print('3rd coeffs:', left_poly_coeff[2])
@@ -482,17 +488,37 @@ def smoothPolyCoeff(leftLine, rightLine, left_poly_coeff, right_poly_coeff):
         print('change of left line:', leftChangePx)
         print('change of right line:', rightChangePx)
     
+    
         # if the lines are diverging
-        if leftChangePx - rightChangePx > 30:
-            print('its a jump!')
+        if leftChangePx - rightChangePx > 100:
+            print('ITs A JUMP!')
             
             # the line with the biggest change is considered faulty
             if abs(leftChangePx) > abs(rightChangePx):
                 # left line faulty
                 # overwrite the faulty left poly coeffs with the poly coeffs of the right
-                left_poly_coeff[2] = right_poly_coeff[2]
+                print('left is faulty')
+                left_poly_coeff = leftLine.getRecentPolyCoeff()[-1]
+                
+                # get the 3rd coeff of last frame
+#                left_poly_coeff[2] = leftLine.getRecentPolyCoeff()[-1][2]
+                # overwrite the 1st and 2nd coeff with the values of the right line
+#                left_poly_coeff[0] = right_poly_coeff[0]
+#                left_poly_coeff[1] = right_poly_coeff[1]
+                statement = "left is faulty - will be corrected"
+
+            else:
+                # right is faulty
+                print('right is faulty')
+                right_poly_coeff = rightLine.getRecentPolyCoeff()[-1]
+                # get the coeffs of last frame
+#                right_poly_coeff[2] = rightLine.getRecentPolyCoeff()[-1][2]
+                # overwrite the 1st and 2nd coeff with the values of the left line
+#                right_poly_coeff[0] = left_poly_coeff[0]
+#                right_poly_coeff[1] = left_poly_coeff[1]
+                statement = "right is faulty - will be corrected"
         
-    return left_poly_coeff, right_poly_coeff
+    return left_poly_coeff, right_poly_coeff, statement
 
 def findLinesSimple(binary_warped, left_fit, right_fit):
     

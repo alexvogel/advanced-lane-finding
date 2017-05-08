@@ -65,13 +65,11 @@ class Line():
         self.recent_poly_coeff.append(poly_coeff)
         if len(self.recent_poly_coeff) > self.n:
             self.recent_poly_coeff.pop()
-        
-        if len(self.recent_poly_coeff) > 1:
-            # calc the average poly_coeff
+#            self.best_poly_coeff = sum(self.recent_poly_coeff) / len(self.recent_poly_coeff)
+       
             self.best_poly_coeff = sum(self.recent_poly_coeff) / len(self.recent_poly_coeff)
         
-        else:
-            self.best_poly_coeff = poly_coeff
+        self.best_poly_coeff = poly_coeff
         
     def setRadiusOfCurvature(self, radiusMeter):
         self.radius_of_curvature = radiusMeter

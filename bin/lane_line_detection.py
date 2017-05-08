@@ -176,12 +176,20 @@ if args.video:
 
     subclip = None
     if args.startTime and args.endTime:
+        log('info', '--startTime='+str(args.startTime))
+        log('info', '--endTime='+str(args.endTime))
         subclip = clip.subclip(args.startTime, args.endTime)
     elif args.startTime:
+        log('info', '--startTime='+str(args.startTime))
+        log('info', '--endTime is set to end of video.')
         subclip = clip.subclip(t_start=args.startTime)
     elif args.endTime:
-        subclip = clip.subclip(t_start=args.endTime)
+        log('info', '--startTime is set to start of video')
+        log('info', '--endTime='+str(args.endTime))
+        subclip = clip.subclip(t_end=args.endTime)
     else:
+        log('info', '--startTime is set to start of video')
+        log('info', '--endTime is set to end of video.')
         subclip = clip
 
     white_clip = subclip.fl_image(process_image) #NOTE: this function expects color images!!
