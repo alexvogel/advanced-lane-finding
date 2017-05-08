@@ -57,7 +57,8 @@ test images:     inp/img/test_images
 test videos:     inp/vid
 
 ### 3. Usage
-'''
+
+```
 usage: lane_line_detection.py [-h] [--image [PATH]] [--video [PATH]]
                               [--startTime [INT]] [--endTime [INT]]
                               [--visLog INT] [--format STRING] [--outDir PATH]
@@ -88,7 +89,7 @@ optional arguments:
   --outDir PATH      directory for output data. must not exist at call time.
   --calDir PATH      directory for camera calibration images. directory must
                      only contain chessboard 9x6 calibration images.
-'''
+```
 
 example call for processing an image:
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg
