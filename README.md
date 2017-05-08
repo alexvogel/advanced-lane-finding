@@ -57,7 +57,7 @@ test images:     inp/img/test_images
 test videos:     inp/vid
 
 ### 3. Usage
-
+'''
 usage: lane_line_detection.py [-h] [--image [PATH]] [--video [PATH]]
                               [--startTime [INT]] [--endTime [INT]]
                               [--visLog INT] [--format STRING] [--outDir PATH]
@@ -66,13 +66,13 @@ usage: lane_line_detection.py [-h] [--image [PATH]] [--video [PATH]]
 a tool for detecting lane lines in images and videos
 
 optional arguments:
--h, --help         show this help message and exit
---image [PATH]     image from a front facing camera. to detect lane lines
---video [PATH]     video from a front facing camera. to detect lane lines
---startTime [INT]  while developing the image pipeline it can be helpful to
-                   focus on the difficult parts of an video, so to start at
-                   processing at a certain time. e.g. 25 for 25 seconds
-                   after begin.
+  -h, --help         show this help message and exit
+  --image [PATH]     image from a front facing camera. to detect lane lines
+  --video [PATH]     video from a front facing camera. to detect lane lines
+  --startTime [INT]  while developing the image pipeline it can be helpful to
+                     focus on the difficult parts of an video, so to start at
+                     processing at a certain time. e.g. 25 for 25 seconds
+                     after begin.
   --endTime [INT]    to end processing video at a certain time, use this
                      argument. e.g. 30 for end processing 30 seconds after
                      video begin.
@@ -88,6 +88,7 @@ optional arguments:
   --outDir PATH      directory for output data. must not exist at call time.
   --calDir PATH      directory for camera calibration images. directory must
                      only contain chessboard 9x6 calibration images.
+'''
 
 example call for processing an image:
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg
