@@ -477,27 +477,27 @@ def smoothPolyCoeff(leftLine, rightLine, left_poly_coeff, right_poly_coeff):
     statement = "no correction"
 
     if (len(leftLine.getRecentPolyCoeff()) > 0):
-        print('full coeffs:', left_poly_coeff)
-        print('3rd coeffs:', left_poly_coeff[2])
-        print('full recent coeffs:', leftLine.getRecentPolyCoeff()[-1])
-        print('3rd coeffs:', leftLine.getRecentPolyCoeff()[-1][2])
+#         print('full coeffs:', left_poly_coeff)
+#         print('3rd coeffs:', left_poly_coeff[2])
+#         print('full recent coeffs:', leftLine.getRecentPolyCoeff()[-1])
+#         print('3rd coeffs:', leftLine.getRecentPolyCoeff()[-1][2])
         
         leftChangePx = left_poly_coeff[2] - leftLine.getRecentPolyCoeff()[-1][2]
         rightChangePx = right_poly_coeff[2] - rightLine.getRecentPolyCoeff()[-1][2]
     
-        print('change of left line:', leftChangePx)
-        print('change of right line:', rightChangePx)
+#         print('change of left line:', leftChangePx)
+#         print('change of right line:', rightChangePx)
     
     
         # if the lines are diverging
         if leftChangePx - rightChangePx > 100:
-            print('ITs A JUMP!')
+#             print('ITs A JUMP!')
             
             # the line with the biggest change is considered faulty
             if abs(leftChangePx) > abs(rightChangePx):
                 # left line faulty
                 # overwrite the faulty left poly coeffs with the poly coeffs of the right
-                print('left is faulty')
+#                 print('left is faulty')
                 left_poly_coeff = leftLine.getRecentPolyCoeff()[-1]
                 
                 # get the 3rd coeff of last frame
@@ -509,7 +509,7 @@ def smoothPolyCoeff(leftLine, rightLine, left_poly_coeff, right_poly_coeff):
 
             else:
                 # right is faulty
-                print('right is faulty')
+#                 print('right is faulty')
                 right_poly_coeff = rightLine.getRecentPolyCoeff()[-1]
                 # get the coeffs of last frame
 #                right_poly_coeff[2] = rightLine.getRecentPolyCoeff()[-1][2]
