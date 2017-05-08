@@ -41,17 +41,17 @@ You're reading it!
 
 ### 2. Code And Data Setup
 
-The code for this project is composed of 3 files:
+# The code for this project is composed of 3 python files:
 
 main script:     bin/lane_line_detection.py
 helper module:   lib/helper_lane_lines.py
 tracking module: lib/line.py
 
-The images for camera calibration is located in the etc directory
+# The images for camera calibration is located in the etc directory
 
 calibration images: etc/camera_cal
 
-The input data is located in the inp directory
+# The input data is located in the inp directory
 
 test images:     inp/img/test_images
 test videos:     inp/vid
@@ -93,7 +93,8 @@ optional arguments:
 
 example call for processing an image:
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg
-![input image][image1]![result image][image1]
+![input image][image1]
+![result image][image2]
 
 example call for processing an image and output a certain step of the image pipeline instead of the end result:
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg --visLog 4
