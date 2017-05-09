@@ -39,18 +39,22 @@ You're reading it!
 
 #### The code for this project is located of 3 python files:
 
-main script:     bin/lane_line_detection.py\n
-helper module:   lib/helper_lane_lines.py\n
-tracking class:  lib/line.py\n
+main script:     bin/lane_line_detection.py
+
+helper module:   lib/helper_lane_lines.py
+
+tracking class:  lib/line.py
+
 
 #### The images for camera calibration is located in the etc directory
 
-calibration images:\tetc/camera_cal\n
+calibration images:	etc/camera_cal
 
 #### The input data is located in the inp directory
 
-test images:\tinp/img/test_images\n
-test videos:\tinp/vid\n
+test images:	inp/img/test_images
+
+test videos:	inp/vid
 
 ### 3. Usage
 
