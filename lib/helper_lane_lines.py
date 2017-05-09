@@ -71,6 +71,7 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
         retNr: return the result of a certain step of the pipeline
         leftLine: tracking instance for the left line
         rightLine: tracking instance for the right line
+        format: normal|collage4|collage9 for creating collages
         sobel_kernel: size of the sobel kernel
         mag_sobelxy_thresh: tuple of min and max threshold for the binary generation
         return: image with detected-lanes-overlay
@@ -83,48 +84,65 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     if retNr is 0:
         return rgb
 
-    # undistort
-    #undistort = np.copy(rgb)
-#    log('debug', 'undistort image')
+    ###############################
+    #
+    # STEP 1: UNDISTORT IMAGE
+    #
+    ###############################
     rgb_undistort = cv2.undistort(rgb, mtx, dist, None, mtx)
     imageBank[1] = rgb_undistort
     if retNr is 1:
         return rgb_undistort, leftLine, rightLine
 
-    # convert to grayscale
-#    log('debug', 'convert to grayscale')
+    ###############################
+    #
+    # STEP 2: CREATE A GRAYSCALE VERSION OF THE UNDISTORTED IMAGE
+    #
+    ###############################
     gray = cv2.cvtColor(rgb_undistort, cv2.COLOR_RGB2GRAY)
     gray_as_rgb = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
     imageBank[2] = gray_as_rgb
     if retNr is 2:
         return gray_as_rgb, leftLine, rightLine
 
-    # create binary mask of the thresholded magnitude of sobel operator
-#    log('debug', 'create binary mask with abs_sobelxy operator')
+    ###############################
+    #
+    # STEP 3: CREATE A BINARY MASK OF THE MAGNITUDE SOBEL-XY-OPERATOR
+    #
+    ###############################
     binary_output_abs_sobelxy = getBinaryMagSobelXY(gray, sobel_kernel, mag_sobelxy_thresh)
     binary_output_abs_sobelxy_as_rgb = cv2.cvtColor(binary_output_abs_sobelxy * 255, cv2.COLOR_GRAY2RGB)
     imageBank[3] = binary_output_abs_sobelxy_as_rgb
     if retNr is 3:
         return binary_output_abs_sobelxy_as_rgb, leftLine, rightLine
 
-    # create binary mask of the thresholded s of the colorspace hls
-#    log('debug', 'create binary mask with the s of the HLS color space')
+    ###############################
+    #
+    # STEP 4: CREATE A BINARY MASK OF THE S OF THE HLS COLORSPACE VERSION
+    #
+    ###############################
     binary_output_s_of_hls = getBinarySHls(rgb_undistort, hls_thresh)
     binary_output_s_of_hls_as_rgb = cv2.cvtColor(binary_output_s_of_hls * 255, cv2.COLOR_GRAY2RGB)
     imageBank[4] = binary_output_s_of_hls_as_rgb
     if retNr is 4:
         return binary_output_s_of_hls_as_rgb, leftLine, rightLine
 
-    # create a combined binary (gradient and colorspace)
-#    log('debug', 'combine sobel and s binary mask to a single binary mask')
+    ###############################
+    #
+    # STEP 5: COMBINE THE TWO BINARY MASKS IN ONE IMAGE
+    #
+    ###############################
     binary_combined = combineBinaries([binary_output_abs_sobelxy, binary_output_s_of_hls])
     binary_combined_as_rgb = cv2.cvtColor(binary_combined * 255, cv2.COLOR_GRAY2RGB)
     imageBank[5] = binary_combined_as_rgb
     if retNr is 5:
         return binary_combined_as_rgb, leftLine, rightLine
 
-    # warp image from camera view to birds eye view
-#    log('debug', 'transform image from camera view to birds eye view')
+    ###############################
+    #
+    # STEP 6,7,8: WARP THE COMBINED BINARY MASK TO BIRDS EYE VIEW
+    #
+    ###############################
     binary_combined_warped, figs, M, Minv = transformToBirdsView(binary_combined)
 
     figs[0].canvas.draw() # draw the canvas, cache the renderer
@@ -146,6 +164,11 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     if retNr is 8:
         return binary_combined_warped_as_rgb, leftLine, rightLine
     
+    ###############################
+    #
+    # STEP 9: CREATE A HISTOGRAM OF THE LOWER HALF OF THE COMBINED BINARY MASK
+    #
+    ###############################
     # take a histogram along all the columns in the lower half of the image
     histogram = np.sum(binary_combined_warped[binary_combined_warped.shape[0]//2:, :], axis=0)
     plt.clf()
@@ -162,7 +185,11 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     # calc lane width
     widthMeter = calcLaneWidth(leftLine, rightLine)
 
-    # detect Lines
+    ###############################
+    #
+    # STEP 10: DETECT LANE LINES AND CREATE A POLYFIT 2ND ORDER
+    #
+    ###############################
     if leftLine.isDetected() and rightLine.isDetected() and isLaneWidthPlausible(widthMeter):
 #    if False:
          detected_or_sliding_window, left_poly_coeff, right_poly_coeff = findLinesSimple(binary_combined_warped, leftLine.getBestPolyCoeff(), rightLine.getBestPolyCoeff())
@@ -192,17 +219,27 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     leftLine.setRadiusOfCurvature(leftRadiusMeter)
     rightLine.setRadiusOfCurvature(rightRadiusMeter)
     
+    ###############################
+    #
+    # STEP 11: DRAW POLYFITTED LINES AND LANE TO UNDISTORTED IMAGE
+    #
+    ###############################
     # draw the polyfitted lines on undistorted original image
     polyfit_on_undistorted = drawPolyfitOnImage(rgb_undistort, binary_combined_warped, Minv, left_line_x, right_line_x, both_lines_y)
     imageBank[11] = polyfit_on_undistorted
     if retNr is 11:
-        return polyfit_on_undistorted
+        return polyfit_on_undistorted, leftLine, rightLine
     
     # calc the deviation of the lane center of vehicle
     vehicleCenterDeviation = calcVehicleDeviation(left_line_x, right_line_x, both_lines_y)
     leftLine.setLineBasePos(vehicleCenterDeviation)
     rightLine.setLineBasePos(vehicleCenterDeviation)
 
+    ###############################
+    #
+    # STEP 12: WRITE ADDITIONAL DATA ONTO IMAGE
+    #
+    ###############################
     # write text on image
     resultImage = writeText(polyfit_on_undistorted, (leftRadiusMeter+rightRadiusMeter)/2, vehicleCenterDeviation, widthMeter, correctionStatement)
     imageBank[12] = resultImage

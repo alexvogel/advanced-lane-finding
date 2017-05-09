@@ -19,12 +19,23 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./readme_media/calibration2.jpg "Input Image"
-[image2]: ./readme_media/calibration2_undistorted.jpg "Result Image"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
+[image1]: ./readme_media/calibration2.jpg "Calibration"
+[image2]: ./readme_media/small/calibration2.jpg "Calibration"
+[image3]: ./readme_media/small/calibration2_undistorted.jpg "Undistorted Calibration"
+[image4]: ./readme_media/small/test1.jpg "Input"
+[image5]: ./readme_media/small/test1_output.png "Output"
+[image6]: ./readme_media/small/test1_01_undistort.png "Undistorted"
+[image7]: ./readme_media/small/test1_02_gray.png "Grayscale"
+[image8]: ./readme_media/small/test1_03_binary_sobelxy.png "Binary Sobel XY"
+[image9]: ./readme_media/small/test1_04_binary_s_of_hls.png "Binary Saturation"
+[image10]: ./readme_media/small/test1_05_binary_combined.png "Binary Combination"
+[image11]: ./readme_media/small/test1_06_skewed_rectangle.png "Skewed Rectangle"
+[image12]: ./readme_media/small/test1_07_birds_eye_view.png "Birds Eye View"
+[image13]: ./readme_media/small/test1_09_histogram.png "Histogram"
+[image14]: ./readme_media/small/test1_10_sliding_window.png "Sliding Window"
+[image15]: ./readme_media/small/test1_11_colored_lane.png "Colored Lane"
+[image16]: ./readme_media/small/placeholder_project_output.png "Video Result"
+[image17]: ./readme_media/small/placeholder_project_collage4.png "Video Result Image Pipeline"
 [video1]: ./project_video.mp4 "Video"
 
 ---
@@ -37,24 +48,18 @@ You're reading it!
 
 ### 2. Code And Data Setup
 
-#### The code for this project is located of 3 python files:
 
-main script:     bin/lane_line_detection.py
+| What?         		|     File	        		| 
+|:---------------------:|:-------------------------:| 
+| code: main script     | bin/lane_line_detection.py| 
+| code: helper module   | lib/helper_lane_lines.py 	|
+| code: tracking class  | lib/line.py 				|
+| calibration images    | etc/camera_cal/*			|
+| input test images     | inp/img/test_images		|
+| input test videos     | inp/vid/*					|
+| output test images    | out/img/*					|
+| output test videos    | out/vid/*					|
 
-helper module:   lib/helper_lane_lines.py
-
-tracking class:  lib/line.py
-
-
-#### The images for camera calibration is located in the etc directory
-
-calibration images:	etc/camera_cal
-
-#### The input data is located in the inp directory
-
-test images:	inp/img/test_images
-
-test videos:	inp/vid
 
 ### 3. Usage
 
@@ -115,82 +120,101 @@ python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --format col
 
 #### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 
-The code for this step is contained in the calibrateCamera function in the lines # through # of the file bin/helper_lane_lines.py.  
+The code for this step is contained in the 'calibrateCamera' function in the lines 852 through 923 of the file 'lib/helper_lane_lines.py'.  
 
 I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
-I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
+I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to a calibration image itself using the `cv2.undistort()` function and obtained this result: 
 
-[![camera calibration image](./readme_media/calibration2.jpg =250x)]
+![alt text][image2]![alt text][image3]
 
-After a successful calibration procedure, all the resulting objects (ret, mtx, dist, rvecs, tvecs) are written to a pickle file '.calibration.pkl' and placed in the directory, where the calibration images reside. The next time the program is called with the same calibration images, there won't be the need to go through the calibration effort again. Instead the calibration parameters will be read from the precalculated pickle file.
+After a successful calibration procedure, the return value, camera calibration matrix, distortion coefficients, the rotation and the translation vectors (ret, mtx, dist, rvecs, tvecs) are written to a pickle file '.calibration.pkl' and placed in the directory, where the calibration images reside. The next time the program is called with the same calibration images, there won't be the need to go through the calibration effort again. Instead the precalculated calibration parameters will be read from the pickle file.
 
 ### Pipeline (single images)
 
-#### 1. Provide an example of a distortion-corrected image.
+The image pipeline is shaped by 12 image processing steps. The high level code for the image pipeline is contained in the 'laneLinePipeline' function in the lines 64 through 255 of the file 'lib/helper_lane_lines.py'.
+The pipeline transforms an input image to an image with the found lane in it.
 
-To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![alt text][image1]! [alt text][image2]
+![Input][image4]![Output][image5]
 
-#### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
+#### Step 1. Distortion Correction
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+This step uses the the `cv2.undistort` function with the camera calibration matrix and the distortion coefficients to undistort the image (line 92 of 'lib/helper_lane_lines.py').
+![Input][image4]![Undistort][image6]
 
-![alt text][image3]
+#### Step 2. Grayscale Image
 
-#### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
+The Image is converted to grayscale. This version is needed for some subsequent processing steps (line 102 of 'lib/helper_lane_lines.py').
+![Undistort][image6]![Grayscale][image7]
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+#### Step 3. Binary Mask Of Sobel Operator
 
-```python
-src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
-dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
-```
+The Magnitude Sobel-xy-Operator is performed on the grayscale image. This results in a binary mask image (line 113 of 'lib/helper_lane_lines.py')
+![Grayscale][image7]![Binary Sobel xy][image8]
+
+#### Step 4. Binary Mask Of Saturation
+
+The undistorted RGB image is converted to the HLS colorspace. From the HLS colorspace, the thresholded S-Channel results in a binary mask image (line 124 of 'lib/helper_lane_lines.py').
+![Binary Sobel][image8]![Binary Saturation][image9]
+
+#### Step 5. Combinated Binary Mask Of Sobel And Saturation
+
+The binary masks from step 3 and step 4 are combinated in line 135 of 'lib/helper_lane_lines.py'.
+![Binary Sobel][image8]![Binary Saturation][image9]![Binary Combination][image10]
+
+#### Step 6. Perspectively Skewed Rectangle
+
+A perspectively skewed rectangle is placed on the image in line 146 of 'lib/helper_lane_lines.py'.
+![Binary Combination][image10]![Skewed Rectangle][image11]
+
+#### Step 7/8. Birds Eye View
+
+The code for my perspective transform includes a function called `transformToBirdsView()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).
+I hardcoded the source and destination points in the following manner:
 
 This resulted in the following source and destination points:
 
 | Source        | Destination   | 
 |:-------------:|:-------------:| 
-| 585, 460      | 320, 0        | 
-| 203, 720      | 320, 720      |
-| 1127, 720     | 960, 720      |
-| 695, 460      | 960, 0        |
+| 200, 720      | 250, 720      | 
+| 1080, 720     | 1030, 720     |
+| 685, 450      | 1030, 0       |
+| 595, 450      | 250, 0        |
 
-I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
+I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image. (line 146 of 'lib/helper_lane_lines.py').
+![Skewed Rectangle][image11]![Birds Eye View][image12]
 
-![alt text][image4]
+#### Step 9. Histogram
 
-#### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
+The Pixels in the lower half of the warped combined binary image are counted with a histogram. The lines are at these x positions where the most white (binary!) pixels are found (line 173 through 179 of 'lib/helper_lane_lines.py').
+![Birds Eye View][image12]![Histogram][image13]
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+#### Step 10. Detecting Lane Lines
 
-![alt text][image5]
+From step 9 we know the x-positions of the lines. From there we detect the upper area of the lines with a sliding window approach. In each y-bin the bright pixels are counted and the mean x-position is where the line is situated in the current window. Then I fit the lane lines with a 2nd order polynomial (line 193 through 198 of 'lib/helper_lane_lines.py').
+![Sliding Window][image14]
 
-#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
+#### Step 11. Overlay Detected Lines
 
-I did this in lines # through # in my code in `my_other_file.py`
+The found lines and the lane is being drawn onto the undistorted rgb image (line 228 of 'lib/helper_lane_lines.py'). 
+![Colored Lane][image15]
 
-#### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
+#### Step 12. Overlay Text - Result
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
-
-![alt text][image6]
-
----
+The curvature of the detected lane and the vehicle-deviation from the lane center is being calculated and written onto the image (line 244 of 'lib/helper_lane_lines.py'). 
+![Output][image5]
 
 ### Pipeline (video)
 
-#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
+#### Result Of Project Video
 
-Here's a [link to my video result](./project_video.mp4)
+You find the result of project video here [link to result of project video](out/vid/project_output.mp4)
+[![Advanced Lane Finding][image16](https://www.youtube.com/watch?v=EVYzt8sg7H4 "Advanced Lane Finding")
+
+#### Result Of Project Video With Image Pipeline Visualization
+
+You find the result of project video with pipeline visualization here [link to result of project video](out/vid/project_collage4_output.mp4)
+[![Advanced Lane Finding][image17](https://www.youtube.com/watch?v=1vQLGEmQ4lI "Advanced Lane Finding Image Pipeline")
 
 ---
 

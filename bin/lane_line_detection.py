@@ -84,8 +84,8 @@ map_int_name = {
                     8: '08_warped_binary',
                     9: '09_histogram',
                     10:'10_detect_lines',
-                    11:'13_undist_with_polyfit',
-                    12:'14_result_with_text',
+                    11:'11_undist_with_polyfit',
+                    12:'12_result_with_text',
                     False: '99_result',
                 }
 
