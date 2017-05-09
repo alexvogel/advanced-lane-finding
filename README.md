@@ -61,13 +61,13 @@ a tool for detecting lane lines in images and videos
 
 optional arguments:
   -h, --help         show this help message and exit
-  --image [PATH]     image from a front facing camera. to detect lane lines
-  --video [PATH]     video from a front facing camera. to detect lane lines
-  --startTime [INT]  while developing the image pipeline it can be helpful to
+  --image  PATH      image from a front facing camera. to detect lane lines
+  --video  PATH      video from a front facing camera. to detect lane lines
+  --startTime INT    while developing the image pipeline it can be helpful to
                      focus on the difficult parts of an video, so to start
                      processing at a certain time eg. 25 seconds
                      after video begin.
-  --endTime [INT]    to end processing video at a certain time. 30 ends
+  --endTime INT      to end processing video at a certain time. 30 ends
   					 30 seconds after video begin.
   --visLog INT       for debugging or documentation of the pipeline you can
   					 output the image at a certain processing step.
