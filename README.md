@@ -1,4 +1,4 @@
-# Advanced Lane Finding Project**
+# Advanced Lane Finding Project
 
 The goals / steps of this project are the following:
 
@@ -64,24 +64,33 @@ optional arguments:
   --image [PATH]     image from a front facing camera. to detect lane lines
   --video [PATH]     video from a front facing camera. to detect lane lines
   --startTime [INT]  while developing the image pipeline it can be helpful to
-                     focus on the difficult parts of an video, so to start at
-                     processing at a certain time. e.g. 25 for 25 seconds
-                     after begin.
-  --endTime [INT]    to end processing video at a certain time, use this
-                     argument. e.g. 30 for end processing 30 seconds after
-                     video begin.
-  --visLog INT       for debugging or documentation of the pipeline.
-                     1=undistorted image 2=grayscale 3=binary mask magnitude
-                     sobel xy 4=hls binary mask 5=combination of binary masks
-                     6=unwarped binary with polygon 7=warped binary with
-                     polygon 8=warped binary 9=histogram 10=detected lines
-                     11=undistorted with detected lines 12=result with text
-  --format STRING    to visualize single steps of the image pipeline, use this
-                     argument. --format=collage4, --format=collage9 creates a
-                     collage of images instead of the result image
+                     focus on the difficult parts of an video, so to start
+                     processing at a certain time eg. 25 seconds
+                     after video begin.
+  --endTime [INT]    to end processing video at a certain time. 30 ends
+  					 30 seconds after video begin.
+  --visLog INT       for debugging or documentation of the pipeline you can
+  					 output the image at a certain processing step.
+  					 1=undistorted image
+  					 2=grayscale
+  					 3=binary mask magnitude sobel xy
+  					 4=hls binary mask
+  					 5=combination of binary masks
+                     6=unwarped binary with polygon
+                     7=warped binary with polygon
+                     8=warped binary
+                     9=histogram
+                     10=detected lines
+                     11=undistorted with detected lines
+                     12=result with text
+  --format STRING    to visualize the single steps of the image pipeline
+  					 in one single image. use --format=collage4 for a
+  					 4-image-collage and --format=collage9 for a 9-image-collage
   --outDir PATH      directory for output data. must not exist at call time.
+  					 default is --outDir=output_directory_<time>
   --calDir PATH      directory for camera calibration images. directory must
                      only contain chessboard 9x6 calibration images.
+                     default is --calDir=etc/camera_cal
 
 example call for processing an image:
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg

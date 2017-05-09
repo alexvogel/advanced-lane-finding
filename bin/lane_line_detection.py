@@ -40,16 +40,16 @@ date = "2017-05-08"
 # Definieren der Kommandozeilenparameter
 parser = argparse.ArgumentParser(description='a tool for detecting lane lines in images and videos',
                                  epilog='author: alexander.vogel@prozesskraft.de | version: ' + version + ' | date: ' + date)
-parser.add_argument('--image', metavar='PATH', type=str, nargs='?', required=False,
+parser.add_argument('--image', metavar='PATH', type=str, required=False,
                    help='image from a front facing camera. to detect lane lines')
-parser.add_argument('--video', metavar='PATH', type=str, nargs='?', required=False,
+parser.add_argument('--video', metavar='PATH', type=str, required=False,
                    help='video from a front facing camera. to detect lane lines')
-parser.add_argument('--startTime', metavar='INT', type=int, nargs='?', required=False,
-                   help='while developing the image pipeline it can be helpful to focus on the difficult parts of an video, so to start at processing at a certain time. e.g. 25 for 25 seconds after begin.')
-parser.add_argument('--endTime', metavar='INT', type=int, nargs='?', required=False,
-                   help='to end processing video at a certain time, use this argument. e.g. 30 for end processing 30 seconds after video begin.')
+parser.add_argument('--startTime', metavar='INT', type=int, required=False,
+                   help='when developing the image pipeline it can be helpful to focus on the difficult parts of an video. Use this argument to shift the entry point. Eg. --startTime=25 starts the processing pipeline at the 25th second after video begin.')
+parser.add_argument('--endTime', metavar='INT', type=int, required=False,
+                   help='Use this argument to shift the exit point. Eg. --endTime=30 ends the processing pipeline at the 30th second after video begin.')
 parser.add_argument('--visLog', metavar='INT', type=int, action='store', default=False,
-                   help='for debugging or documentation of the pipeline. \
+                   help='for debugging or documentation of the pipeline you can output the image at a certain processing step \
                    1=undistorted image \
                    2=grayscale \
                    3=binary mask magnitude sobel xy \
@@ -61,14 +61,14 @@ parser.add_argument('--visLog', metavar='INT', type=int, action='store', default
                    9=histogram \
                    10=detected lines \
                    11=undistorted with detected lines \
-                   12=result with text' \
+                   12=result with text'
                    )
 parser.add_argument('--format', metavar='STRING', type=str, action='store', default='normal',
-                   help='to visualize single steps of the image pipeline, use this argument. --format=collage4, --format=collage9 creates a collage of images instead of the result image')
+                   help='to visualize several steps of the image pipeline and plot them in one single image. use --format=collage4 for a 4-image-collage and --format=collage9 for a 9-image-collage')
 parser.add_argument('--outDir', metavar='PATH', action='store', default='output_directory_'+str(time()),
-                   help='directory for output data. must not exist at call time.')
+                   help='directory for output data. must not exist at call time. default is --outDir=output_directory_<time>')
 parser.add_argument('--calDir', metavar='PATH', action='store', required=False, default=etcDir + '/camera_cal',
-                   help='directory for camera calibration images. directory must only contain chessboard 9x6 calibration images.')
+                   help='directory for camera calibration images. directory must only contain chessboard 9x6 calibration images. default is --calDir=etc/camera_cal')
 
 args = parser.parse_args()
 
