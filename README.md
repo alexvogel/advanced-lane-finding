@@ -17,6 +17,16 @@ The goals / steps of this project are the following:
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
+[//]: # (Image References)
+
+[image1]: ./readme_media/calibration2.jpg "Input Image"
+[image2]: ./readme_media/calibration2_undistorted.jpg "Result Image"
+[image3]: ./examples/binary_combo_example.jpg "Binary Example"
+[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
+[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
+[image6]: ./examples/example_output.jpg "Output"
+[video1]: ./project_video.mp4 "Video"
+
 ---
 
 ### Writeup / README
@@ -29,18 +39,18 @@ You're reading it!
 
 #### The code for this project is located of 3 python files:
 
-main script:     bin/lane_line_detection.py
-helper module:   lib/helper_lane_lines.py
-tracking class:  lib/line.py
+main script:     bin/lane_line_detection.py\n
+helper module:   lib/helper_lane_lines.py\n
+tracking class:  lib/line.py\n
 
 #### The images for camera calibration is located in the etc directory
 
-calibration images: etc/camera_cal
+calibration images:\tetc/camera_cal\n
 
 #### The input data is located in the inp directory
 
-test images:     inp/img/test_images
-test videos:     inp/vid
+test images:\tinp/img/test_images\n
+test videos:\tinp/vid\n
 
 ### 3. Usage
 
