@@ -20,33 +20,27 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 
 [image1]: ./readme_media/calibration2.jpg "Calibration"
-[image2]: ./readme_media/small/calibration2.jpg "Calibration"
-[image3]: ./readme_media/small/calibration2_undistorted.jpg "Undistorted Calibration"
-[image4]: ./readme_media/small/test1.jpg "Input"
-[image5]: ./readme_media/small/test1_output.png "Output"
-[image6]: ./readme_media/small/test1_01_undistort.png "Undistorted"
-[image7]: ./readme_media/small/test1_02_gray.png "Grayscale"
-[image8]: ./readme_media/small/test1_03_binary_sobelxy.png "Binary Sobel XY"
-[image9]: ./readme_media/small/test1_04_binary_s_of_hls.png "Binary Saturation"
-[image10]: ./readme_media/small/test1_05_binary_combined.png "Binary Combination"
-[image11]: ./readme_media/small/test1_06_skewed_rectangle.png "Skewed Rectangle"
-[image12]: ./readme_media/small/test1_07_birds_eye_view.png "Birds Eye View"
-[image13]: ./readme_media/small/test1_09_histogram.png "Histogram"
-[image14]: ./readme_media/small/test1_10_sliding_window.png "Sliding Window"
-[image15]: ./readme_media/small/test1_11_colored_lane.png "Colored Lane"
-[image16]: ./readme_media/small/placeholder_project_output.png "Video Result"
-[image17]: ./readme_media/small/placeholder_project_collage4.png "Video Result Image Pipeline"
+[image2]: ./readme_media/small30/calibration2.jpg "Calibration"
+[image3]: ./readme_media/small30/calibration2_undistorted.jpg "Undistorted Calibration"
+[image4]: ./readme_media/small30/test1.jpg "Input"
+[image5]: ./readme_media/small30/test1_output.png "Output"
+[image6]: ./readme_media/small30/test1_01_undistort.png "Undistorted"
+[image7]: ./readme_media/small30/test1_02_gray.png "Grayscale"
+[image8]: ./readme_media/small30/test1_03_binary_sobelxy.png "Binary Sobel XY"
+[image9]: ./readme_media/small30/test1_04_binary_s_of_hls.png "Binary Saturation"
+[image10]: ./readme_media/small30/test1_05_binary_combined.png "Binary Combination"
+[image11]: ./readme_media/small30/test1_06_skewed_rectangle.png "Skewed Rectangle"
+[image12]: ./readme_media/small30/test1_07_birds_eye_view.png "Birds Eye View"
+[image13]: ./readme_media/small30/test1_09_histogram.png "Histogram"
+[image14]: ./readme_media/small30/test1_10_sliding_window.png "Sliding Window"
+[image15]: ./readme_media/small30/test1_11_colored_lane.png "Colored Lane"
+[image16]: ./readme_media/small30/placeholder_project_output.png "Video Result"
+[image17]: ./readme_media/small30/placeholder_project_collage4.png "Video Result Image Pipeline"
 [video1]: ./project_video.mp4 "Video"
 
 ---
 
-### Writeup / README
-
-#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
-
-You're reading it!
-
-### 2. Code And Data Setup
+### 1. Code And Data Setup
 
 
 | What?         		|     File	        		| 
@@ -55,7 +49,7 @@ You're reading it!
 | code: helper module   | lib/helper_lane_lines.py 	|
 | code: tracking class  | lib/line.py 				|
 | calibration images    | etc/camera_cal/*			|
-| input test images     | inp/img/test_images		|
+| input test images     | inp/img/test_images/*		|
 | input test videos     | inp/vid/*					|
 | output test images    | out/img/*					|
 | output test videos    | out/vid/*					|
@@ -116,9 +110,7 @@ python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --format col
 example call for processing a video. This outputs a video of 9 important steps of the image pipeline:
 python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --format collage9
 ```
-### Camera Calibration
-
-#### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
+### 4. Camera Calibration
 
 The code for this step is contained in the 'calibrateCamera' function in the lines 852 through 923 of the file 'lib/helper_lane_lines.py'.  
 
@@ -130,7 +122,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 After a successful calibration procedure, the return value, camera calibration matrix, distortion coefficients, the rotation and the translation vectors (ret, mtx, dist, rvecs, tvecs) are written to a pickle file '.calibration.pkl' and placed in the directory, where the calibration images reside. The next time the program is called with the same calibration images, there won't be the need to go through the calibration effort again. Instead the precalculated calibration parameters will be read from the pickle file.
 
-### Pipeline (single images)
+### 5. Pipeline (single images)
 
 The image pipeline is shaped by 12 image processing steps. The high level code for the image pipeline is contained in the 'laneLinePipeline' function in the lines 64 through 255 of the file 'lib/helper_lane_lines.py'.
 The pipeline transforms an input image to an image with the found lane in it.
@@ -208,13 +200,13 @@ The curvature of the detected lane and the vehicle-deviation from the lane cente
 
 #### Result Of Project Video
 
-You find the result of project video here [link to result of project video](out/vid/project_output.mp4)
-[![Advanced Lane Finding][image16](https://www.youtube.com/watch?v=EVYzt8sg7H4 "Advanced Lane Finding")
+You find the result of project video here [out/vid/project_output.mp4](out/vid/project_output.mp4)
+[![Advanced Lane Finding](./readme_media/small30/placeholder_project_output.png)](https://www.youtube.com/watch?v=EVYzt8sg7H4 "Advanced Lane Finding")
 
 #### Result Of Project Video With Image Pipeline Visualization
 
-You find the result of project video with pipeline visualization here [link to result of project video](out/vid/project_collage4_output.mp4)
-[![Advanced Lane Finding][image17](https://www.youtube.com/watch?v=1vQLGEmQ4lI "Advanced Lane Finding Image Pipeline")
+You find the result of project video with pipeline visualization here [out/vid/project_collage4_output.mp4](out/vid/project_collage4_output.mp4)
+[![Advanced Lane Finding](./readme_media/small30/placeholder_project_collage4.png)](https://www.youtube.com/watch?v=1vQLGEmQ4lI "Advanced Lane Finding Image Pipeline")
 
 ---
 
