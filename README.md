@@ -17,20 +17,6 @@ The goals / steps of this project are the following:
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
-[//]: # (Image References)
-
-[image1]: ./readme_media/test1.jpg "Input Image"
-[image2]: ./readme_media/result_test1.png "Result Image"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
-[video1]: ./project_video.mp4 "Video"
-
-## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
-
-### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
-
 ---
 
 ### Writeup / README
@@ -41,17 +27,17 @@ You're reading it!
 
 ### 2. Code And Data Setup
 
-# The code for this project is composed of 3 python files:
+#### The code for this project is located of 3 python files:
 
 main script:     bin/lane_line_detection.py
 helper module:   lib/helper_lane_lines.py
-tracking module: lib/line.py
+tracking class:  lib/line.py
 
-# The images for camera calibration is located in the etc directory
+#### The images for camera calibration is located in the etc directory
 
 calibration images: etc/camera_cal
 
-# The input data is located in the inp directory
+#### The input data is located in the inp directory
 
 test images:     inp/img/test_images
 test videos:     inp/vid
@@ -93,7 +79,7 @@ optional arguments:
 example call for processing an image:
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg
 
-example call for processing an image and output a certain step of the image pipeline instead of the end result:
+example call for processing an image. This outputs a certain step of the image pipeline:
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg --visLog 4
 
 example call for processing a video:
@@ -102,33 +88,35 @@ python bin/lane_line_detection.py --image inp/vid/project_video.mp4
 example call for processing only the part of a video between 38 and 45 seconds:
 python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --startTime 38 --endTime 45
 
-example call for processing a video and output a certain step of the image pipeline instead of the end result:
+example call for processing a video. This outputs a video of a certain step of the image pipeline:
 python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --visLog 4
 
-example call for processing a video and output 4 important steps of the image pipeline instead of the end result:
+example call for processing a video. This outputs a video of 4 important steps of the image pipeline:
 python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --format collage4
 
-example call for processing a video and output 9 important steps of the image pipeline instead of the end result:
+example call for processing a video. This outputs a video of 9 important steps of the image pipeline:
 python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --format collage9
 ```
 ### Camera Calibration
 
 #### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 
-The code for this step is contained in the calibrateCamera function of the file bin/helper_lane_lines.py first code cell of the IPython notebook located in "./examples/example.ipynb" (or in lines # through # of the file called `some_file.py`).  
+The code for this step is contained in the calibrateCamera function in the lines # through # of the file bin/helper_lane_lines.py.  
 
 I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
 I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
 
-![alt text][image1]
+[![camera calibration image](./readme_media/calibration2.jpg =250x)]
+
+After a successful calibration procedure, all the resulting objects (ret, mtx, dist, rvecs, tvecs) are written to a pickle file '.calibration.pkl' and placed in the directory, where the calibration images reside. The next time the program is called with the same calibration images, there won't be the need to go through the calibration effort again. Instead the calibration parameters will be read from the precalculated pickle file.
 
 ### Pipeline (single images)
 
 #### 1. Provide an example of a distortion-corrected image.
 
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![alt text][image2]
+![alt text][image1]! [alt text][image2]
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
