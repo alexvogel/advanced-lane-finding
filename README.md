@@ -123,7 +123,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 ![alt text][image2]    ![alt text][image3]
 
-After a successful calibration procedure, the return value, camera calibration matrix, distortion coefficients, the rotation and the translation vectors (ret, mtx, dist, rvecs, tvecs) are written to a pickle file '.calibration.pkl' and placed in the directory, where the calibration images reside. The next time the program is called with the same calibration images, there won't be the need to go through the calibration effort again. Instead the precalculated calibration parameters will be read from the pickle file.
+After a successful calibration procedure, the return value, camera calibration matrix, distortion coefficients, the rotation and the translation vectors (ret, mtx, dist, rvecs, tvecs) are written to a pickle file '.calibration.pkl' and placed in the directory, where the calibration images reside. The next time the program is called with the same calibration images, the calibration step will be skipped and the precalculated calibration parameters will be read from the pickle file.
 
 ### 5. Pipeline (single images)
 
