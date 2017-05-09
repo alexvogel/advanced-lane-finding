@@ -32,7 +32,7 @@ The goals / steps of this project are the following:
 [image11]: ./readme_media/small30/test1_06_skewed_rectangle.png "Skewed Rectangle"
 [image12]: ./readme_media/small30/test1_07_birds_eye_view.png "Birds Eye View"
 [image13]: ./readme_media/small30/test1_09_histogram.png "Histogram"
-[image14]: ./readme_media/small50/test1_10_sliding_window.png "Sliding Window"
+[image14]: ./readme_media/small30/test1_10_sliding_window.png "Sliding Window"
 [image15]: ./readme_media/small30/test1_11_colored_lane.png "Colored Lane"
 [image16]: ./readme_media/test1_result.png "Output"
 [image17]: ./readme_media/small30/placeholder_project_collage4.png "Video Result Image Pipeline"
@@ -118,7 +118,7 @@ I start by preparing "object points", which will be the (x, y, z) coordinates of
 
 I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to a calibration image itself using the `cv2.undistort()` function and obtained this result: 
 
-![alt text][image2]![alt text][image3]
+![alt text][image2]    ![alt text][image3]
 
 After a successful calibration procedure, the return value, camera calibration matrix, distortion coefficients, the rotation and the translation vectors (ret, mtx, dist, rvecs, tvecs) are written to a pickle file '.calibration.pkl' and placed in the directory, where the calibration images reside. The next time the program is called with the same calibration images, there won't be the need to go through the calibration effort again. Instead the precalculated calibration parameters will be read from the pickle file.
 
@@ -127,21 +127,24 @@ After a successful calibration procedure, the return value, camera calibration m
 The image pipeline is shaped by 12 image processing steps. The high level code for the image pipeline is contained in the 'laneLinePipeline' function in the lines 64 through 255 of the file 'lib/helper_lane_lines.py'.
 The pipeline transforms an input image to an image with the found lane in it.
 
-![Input][image4]![Output][image5]
+![Input][image4]    ![Output][image5]
 
 #### Step 1. Distortion Correction
 
 This step uses the the `cv2.undistort` function with the camera calibration matrix and the distortion coefficients to undistort the image (line 92 of 'lib/helper_lane_lines.py').
+
 ![Input][image4]    ![Undistort][image6]
 
 #### Step 2. Grayscale Image
 
 The Image is converted to grayscale. This version is needed for some subsequent processing steps (line 102 of 'lib/helper_lane_lines.py').
+
 ![Undistort][image6]    ![Grayscale][image7]
 
 #### Step 3. Binary Mask Of Sobel Operator
 
 The Magnitude Sobel-xy-Operator is performed on the grayscale image. This results in a binary mask image (line 113 of 'lib/helper_lane_lines.py')
+
 ![Grayscale][image7]    ![Binary Sobel xy][image8]
 
 #### Step 4. Binary Mask Of Saturation
@@ -210,16 +213,33 @@ The curvature of the detected lane and the vehicle-deviation from the lane cente
 
 You find the result of project video here [out/vid/project_output.mp4](out/vid/project_output.mp4)
 
-[![Advanced Lane Finding](./readme_media/small30/placeholder_project_output.png)](https://www.youtube.com/watch?v=EVYzt8sg7H4 "Advanced Lane Finding")
+[![Advanced Lane Finding](./readme_media/small50/placeholder_project_output.png)](https://www.youtube.com/watch?v=EVYzt8sg7H4 "Advanced Lane Finding")
 
 #### Result Of Project Video With Image Pipeline Visualization
 
 You find the result of project video with pipeline visualization here [out/vid/project_collage4_output.mp4](out/vid/project_collage4_output.mp4)
 
-[![Advanced Lane Finding](./readme_media/small30/placeholder_project_collage4.png)](https://www.youtube.com/watch?v=1vQLGEmQ4lI "Advanced Lane Finding Image Pipeline")
+[![Advanced Lane Finding](./readme_media/small50/placeholder_project_collage4.png)](https://www.youtube.com/watch?v=1vQLGEmQ4lI "Advanced Lane Finding Image Pipeline")
 
 ### Discussion
 
-#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+#### 1. Problems / Issues
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+One problem that I experienced was, that in the project video the left line jumped to the left when the vehicle drove over the brighter road surface.
+
+I solved that problem by changing the destination points in the step 7 "Birds Eye View". When transforming the image I zoomed more in and got rid of the irritating pixels that made my line jump.
+
+Another problem was, that in some frames of the project video the right line has been improperly detected and wandered off even beyond the left line.
+
+I solved this problem by instead of working with the fitted polynomial, I calculated the mean of the last 5 frames. This solved the 'jumping-lane' problem.
+
+#### 2. Where Will The Pipeline Likely Fail?
+
+My current pipeline will fail on roads with color edges that run parallel to the lane lines, like in video inp/vid/challenge.mp4. These edges will be falsely detected as lane lines and make the pipeline fail.
+
+#### 3. Improve Robustness
+
+These improvements would make the pipeline more robust:
+
+* tracking the lane width could detect errors and jumping lines
+* if only one line wanders off or jumps and the other one stays pretty much in the same place, this line could use the polyfit coefficients of the correct line to augment a line for some frames.
