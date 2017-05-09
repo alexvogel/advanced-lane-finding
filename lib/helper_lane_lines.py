@@ -783,7 +783,7 @@ def transformToBirdsView(img):
     ax2.add_patch(patch)
 #    plt.show()
     
-    plt.clf()
+#    plt.clf()
 
     return warped, [fig, fig2], M, Minv
     

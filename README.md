@@ -19,22 +19,22 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./readme_media/calibration2.jpg "Calibration"
-[image2]: ./readme_media/small30/calibration2.jpg "Calibration"
-[image3]: ./readme_media/small30/calibration2_undistorted.jpg "Undistorted Calibration"
-[image4]: ./readme_media/small30/test1.jpg "Input"
-[image5]: ./readme_media/small30/test1_output.png "Output"
+[image1]: ./readme_media/calibration2.png "Calibration"
+[image2]: ./readme_media/small30/calibration2.png "Calibration"
+[image3]: ./readme_media/small30/calibration2_undistorted.png "Undistorted Calibration"
+[image4]: ./readme_media/small30/test1.png "Input"
+[image5]: ./readme_media/small30/test1_result.png "Output"
 [image6]: ./readme_media/small30/test1_01_undistort.png "Undistorted"
 [image7]: ./readme_media/small30/test1_02_gray.png "Grayscale"
 [image8]: ./readme_media/small30/test1_03_binary_sobelxy.png "Binary Sobel XY"
 [image9]: ./readme_media/small30/test1_04_binary_s_of_hls.png "Binary Saturation"
-[image10]: ./readme_media/small30/test1_05_binary_combined.png "Binary Combination"
+[image10]: ./readme_media/small30/test1_05_binaries_combined.png "Binary Combination"
 [image11]: ./readme_media/small30/test1_06_skewed_rectangle.png "Skewed Rectangle"
 [image12]: ./readme_media/small30/test1_07_birds_eye_view.png "Birds Eye View"
 [image13]: ./readme_media/small30/test1_09_histogram.png "Histogram"
-[image14]: ./readme_media/small30/test1_10_sliding_window.png "Sliding Window"
+[image14]: ./readme_media/small50/test1_10_sliding_window.png "Sliding Window"
 [image15]: ./readme_media/small30/test1_11_colored_lane.png "Colored Lane"
-[image16]: ./readme_media/small30/placeholder_project_output.png "Video Result"
+[image16]: ./readme_media/test1_result.png "Output"
 [image17]: ./readme_media/small30/placeholder_project_collage4.png "Video Result Image Pipeline"
 [video1]: ./project_video.mp4 "Video"
 
@@ -132,32 +132,35 @@ The pipeline transforms an input image to an image with the found lane in it.
 #### Step 1. Distortion Correction
 
 This step uses the the `cv2.undistort` function with the camera calibration matrix and the distortion coefficients to undistort the image (line 92 of 'lib/helper_lane_lines.py').
-![Input][image4]![Undistort][image6]
+![Input][image4]    ![Undistort][image6]
 
 #### Step 2. Grayscale Image
 
 The Image is converted to grayscale. This version is needed for some subsequent processing steps (line 102 of 'lib/helper_lane_lines.py').
-![Undistort][image6]![Grayscale][image7]
+![Undistort][image6]    ![Grayscale][image7]
 
 #### Step 3. Binary Mask Of Sobel Operator
 
 The Magnitude Sobel-xy-Operator is performed on the grayscale image. This results in a binary mask image (line 113 of 'lib/helper_lane_lines.py')
-![Grayscale][image7]![Binary Sobel xy][image8]
+![Grayscale][image7]    ![Binary Sobel xy][image8]
 
 #### Step 4. Binary Mask Of Saturation
 
 The undistorted RGB image is converted to the HLS colorspace. From the HLS colorspace, the thresholded S-Channel results in a binary mask image (line 124 of 'lib/helper_lane_lines.py').
-![Binary Sobel][image8]![Binary Saturation][image9]
+
+![Binary Sobel][image8]    ![Binary Saturation][image9]
 
 #### Step 5. Combinated Binary Mask Of Sobel And Saturation
 
 The binary masks from step 3 and step 4 are combinated in line 135 of 'lib/helper_lane_lines.py'.
-![Binary Sobel][image8]![Binary Saturation][image9]![Binary Combination][image10]
+
+![Binary Combination][image10]
 
 #### Step 6. Perspectively Skewed Rectangle
 
 A perspectively skewed rectangle is placed on the image in line 146 of 'lib/helper_lane_lines.py'.
-![Binary Combination][image10]![Skewed Rectangle][image11]
+
+![Binary Combination][image10]    ![Skewed Rectangle][image11]
 
 #### Step 7/8. Birds Eye View
 
@@ -174,41 +177,46 @@ This resulted in the following source and destination points:
 | 595, 450      | 250, 0        |
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image. (line 146 of 'lib/helper_lane_lines.py').
-![Skewed Rectangle][image11]![Birds Eye View][image12]
+
+![Skewed Rectangle][image11]    ![Birds Eye View][image12]
 
 #### Step 9. Histogram
 
 The Pixels in the lower half of the warped combined binary image are counted with a histogram. The lines are at these x positions where the most white (binary!) pixels are found (line 173 through 179 of 'lib/helper_lane_lines.py').
-![Birds Eye View][image12]![Histogram][image13]
+
+![Birds Eye View][image12]    ![Histogram][image13]
 
 #### Step 10. Detecting Lane Lines
 
-From step 9 we know the x-positions of the lines. From there we detect the upper area of the lines with a sliding window approach. In each y-bin the bright pixels are counted and the mean x-position is where the line is situated in the current window. Then I fit the lane lines with a 2nd order polynomial (line 193 through 198 of 'lib/helper_lane_lines.py').
+From step 9 we know the x-positions of the lines in the lower half of the image. From there we detect the upper area of the lines with a sliding window approach. In each y-bin the bright pixels are counted and the mean x-position is where the line is situated in the current window. Then we fit the lane lines with a 2nd order polynomial (line 193 through 198 of 'lib/helper_lane_lines.py').
+
 ![Sliding Window][image14]
 
 #### Step 11. Overlay Detected Lines
 
 The found lines and the lane is being drawn onto the undistorted rgb image (line 228 of 'lib/helper_lane_lines.py'). 
+
 ![Colored Lane][image15]
 
 #### Step 12. Overlay Text - Result
 
 The curvature of the detected lane and the vehicle-deviation from the lane center is being calculated and written onto the image (line 244 of 'lib/helper_lane_lines.py'). 
-![Output][image5]
+
+![Output][image16]
 
 ### Pipeline (video)
 
 #### Result Of Project Video
 
 You find the result of project video here [out/vid/project_output.mp4](out/vid/project_output.mp4)
+
 [![Advanced Lane Finding](./readme_media/small30/placeholder_project_output.png)](https://www.youtube.com/watch?v=EVYzt8sg7H4 "Advanced Lane Finding")
 
 #### Result Of Project Video With Image Pipeline Visualization
 
 You find the result of project video with pipeline visualization here [out/vid/project_collage4_output.mp4](out/vid/project_collage4_output.mp4)
-[![Advanced Lane Finding](./readme_media/small30/placeholder_project_collage4.png)](https://www.youtube.com/watch?v=1vQLGEmQ4lI "Advanced Lane Finding Image Pipeline")
 
----
+[![Advanced Lane Finding](./readme_media/small30/placeholder_project_collage4.png)](https://www.youtube.com/watch?v=1vQLGEmQ4lI "Advanced Lane Finding Image Pipeline")
 
 ### Discussion
 
