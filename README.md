@@ -20,8 +20,8 @@ The goals / steps of this project are the following:
 [image5]: ./readme_media/small30/test1_result.png "Output"
 [image6]: ./readme_media/small30/test1_01_undistort.png "Undistorted"
 [image7]: ./readme_media/small30/test1_02_gray.png "Grayscale"
-[image8]: ./readme_media/small30/test1_03_binary_sobelxy.png "Binary Sobel XY"
-[image9]: ./readme_media/small30/test1_04_binary_s_of_hls.png "Binary Saturation"
+[image8]: ./readme_media/small30/test1_03_binary_b_of_lab.png "Binary B of LAB"
+[image9]: ./readme_media/small30/test1_04_binary_l_of_luv.png "Binary L of LUV"
 [image10]: ./readme_media/small30/test1_05_binaries_combined.png "Binary Combination"
 [image11]: ./readme_media/small30/test1_06_skewed_rectangle.png "Skewed Rectangle"
 [image12]: ./readme_media/small30/test1_07_birds_eye_view.png "Birds Eye View"
@@ -144,27 +144,27 @@ The Image is converted to grayscale. This version is needed for some subsequent 
 
 ![Undistort][image6]    ![Grayscale][image7]
 
-#### Step 3. Binary Mask Of Sobel Operator
+#### Step 3. Binary Mask Of B Of The LAB Colorspace
 
-The Magnitude Sobel-xy-Operator is performed on the grayscale image. This results in a binary mask image (line 113 of 'lib/helper_lane_lines.py')
+The undistorted RGB image is converted to the LAB colorspace. From the LAB colorspace, the thresholded B-Channel results in a binary mask image (line 135 of 'lib/helper_lane_lines.py').
 
-![Grayscale][image7]    ![Binary Sobel xy][image8]
+![Undistort][image6]    ![Binary B of LAB][image8]
 
-#### Step 4. Binary Mask Of Saturation
+#### Step 4. Binary Mask Of L Of LUV Colorspace
 
-The undistorted RGB image is converted to the HLS colorspace. From the HLS colorspace, the thresholded S-Channel results in a binary mask image (line 124 of 'lib/helper_lane_lines.py').
+The undistorted RGB image is converted to the LUV colorspace. From the LUV colorspace, the thresholded L-Channel results in a binary mask image (line 146 of 'lib/helper_lane_lines.py').
 
-![Binary Sobel][image8]    ![Binary Saturation][image9]
+![Undistort][image6]    ![Binary L of LUV][image9]
 
-#### Step 5. Combinated Binary Mask Of Sobel And Saturation
+#### Step 5. Combined Binary Mask Of 'Binary Mask Of B Of The LAB Colorspace' And 'Binary Mask Of L Of LUV Colorspace'
 
-The binary masks from step 3 and step 4 are combinated in line 135 of 'lib/helper_lane_lines.py'.
+The binary masks from step 3 and step 4 are combined in a single binary mask in line 157 of 'lib/helper_lane_lines.py'.
 
 ![Binary Combination][image10]
 
 #### Step 6. Perspectively Skewed Rectangle
 
-A perspectively skewed rectangle is placed on the image in line 146 of 'lib/helper_lane_lines.py'.
+A perspectively skewed rectangle is placed on the image in line 168 of 'lib/helper_lane_lines.py'.
 
 ![Binary Combination][image10]    ![Skewed Rectangle][image11]
 
@@ -177,36 +177,36 @@ This resulted in the following source and destination points:
 
 | Source        | Destination   | 
 |:-------------:|:-------------:| 
-| 200, 720      | 250, 720      | 
-| 1080, 720     | 1030, 720     |
-| 685, 450      | 1030, 0       |
-| 595, 450      | 250, 0        |
+| 200, 720      | 300, 720      | 
+| 1080, 720     | 980, 720      |
+| 685, 460      | 980, 0        |
+| 595, 460      | 300, 0        |
 
-I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image. (line 146 of 'lib/helper_lane_lines.py').
+I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image. (line 168 of 'lib/helper_lane_lines.py').
 
 ![Skewed Rectangle][image11]    ![Birds Eye View][image12]
 
 #### Step 9. Histogram
 
-The Pixels in the lower half of the warped combined binary image are counted with a histogram. The lines are at these x positions where the most white (binary!) pixels are found (line 173 through 179 of 'lib/helper_lane_lines.py').
+The Pixels in the lower half of the warped combined binary image are counted with a histogram. The lines are at these x positions where the most white (binary!) pixels are found (line 195 through 202 of 'lib/helper_lane_lines.py').
 
 ![Birds Eye View][image12]    ![Histogram][image13]
 
 #### Step 10. Detecting Lane Lines
 
-From step 9 we know the x-positions of the lines in the lower half of the image. From there we detect the upper area of the lines with a sliding window approach. In each y-bin the bright pixels are counted and the mean x-position is where the line is situated in the current window. Then we fit the lane lines with a 2nd order polynomial (line 193 through 198 of 'lib/helper_lane_lines.py').
+From step 9 we know the x-positions of the lines in the lower half of the image. From there we detect the upper area of the lines with a sliding window approach. In each y-bin the bright pixels are counted and the mean x-position is where the line is situated in the current window. Then we fit the lane lines with a 2nd order polynomial (line 215 through 220 of 'lib/helper_lane_lines.py').
 
 ![Sliding Window][image14]
 
 #### Step 11. Overlay Detected Lines
 
-The found lines and the lane is being drawn onto the undistorted rgb image (line 228 of 'lib/helper_lane_lines.py'). 
+The found lines and the lane is being drawn onto the undistorted rgb image (line 250 of 'lib/helper_lane_lines.py'). 
 
 ![Colored Lane][image15]
 
 #### Step 12. Overlay Text - Result
 
-The curvature of the detected lane and the vehicle-deviation from the lane center is being calculated and written onto the image (line 244 of 'lib/helper_lane_lines.py'). 
+The curvature of the detected lane and the vehicle-deviation from the lane center is being calculated and written onto the image (line 266 of 'lib/helper_lane_lines.py'). 
 
 ![Output][image16]
 
@@ -216,23 +216,23 @@ The curvature of the detected lane and the vehicle-deviation from the lane cente
 
 You find the result of project video here [out/vid/project_output.mp4](out/vid/project_output.mp4)
 
-[![Advanced Lane Finding](./readme_media/small50/placeholder_project_output.png)](https://www.youtube.com/watch?v=EVYzt8sg7H4 "Advanced Lane Finding")
+[![Advanced Lane Finding](./readme_media/small50/placeholder_project_output.png)](https://www.youtube.com/edit?o=U&video_id=a2-SzkAc1_g "Advanced Lane Finding")
 
 #### Result Of Project Video With Image Pipeline Visualization
 
 You find the result of project video with pipeline visualization here [out/vid/project_collage4_output.mp4](out/vid/project_collage4_output.mp4)
 
-[![Advanced Lane Finding](./readme_media/small50/placeholder_project_collage4.png)](https://www.youtube.com/watch?v=1vQLGEmQ4lI "Advanced Lane Finding Image Pipeline")
+[![Advanced Lane Finding](./readme_media/small50/placeholder_project_collage4.png)](https://www.youtube.com/edit?o=U&video_id=1xjHJwPOKKk "Advanced Lane Finding Image Pipeline")
 
 ### Discussion
 
 #### 1. Problems / Issues
 
-One problem that I experienced was, that in the project video the left line jumped to the left when the vehicle drove over the brighter road surface.
+* One problem that I experienced was, that in the project video the left line jumped to the left when the vehicle drove over the brighter road surface.
 
 I solved that problem by changing the destination points in the step 7 "Birds Eye View". When transforming the image I zoomed more in and got rid of the irritating pixels that made my line jump.
 
-Another problem was, that in some frames of the project video the right line has been improperly detected and wandered off even beyond the left line.
+* Another problem was, that in some frames of the project video the right line has been improperly detected and wandered off even beyond the left line.
 
 I solved this problem by instead of working with the fitted polynomial, I calculated the mean of the last 5 frames. This solved the 'jumping-lane' problem.
 

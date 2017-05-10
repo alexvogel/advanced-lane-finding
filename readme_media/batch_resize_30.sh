@@ -1,12 +1,12 @@
 convert -resize 30% calibration2.png small30/calibration2.png
 convert -resize 30% calibration2_undistorted.png small30/calibration2_undistorted.png
 convert -resize 30% collage4_troubleshooting.png small30/collage4_troubleshooting.png
-convert -resize 30% placeholder_project_collage4.png small30/placeholder_project_collage4.png
-convert -resize 30% placeholder_project_output.png small30/placeholder_project_output.png
+#convert -resize 30% placeholder_project_collage4.png small30/placeholder_project_collage4.png
+#convert -resize 30% placeholder_project_output.png small30/placeholder_project_output.png
 convert -resize 30% test1_01_undistort.png small30/test1_01_undistort.png
 convert -resize 30% test1_02_gray.png small30/test1_02_gray.png
-convert -resize 30% test1_03_binary_sobelxy.png small30/test1_03_binary_sobelxy.png
-convert -resize 30% test1_04_binary_s_of_hls.png small30/test1_04_binary_s_of_hls.png
+convert -resize 30% test1_03_binary_b_of_lab.png small30/test1_03_binary_b_of_lab.png
+convert -resize 30% test1_04_binary_l_of_luv.png small30/test1_04_binary_l_of_luv.png
 convert -resize 30% test1_05_binaries_combined.png small30/test1_05_binaries_combined.png
 convert -resize 30% test1_06_skewed_rectangle.png small30/test1_06_skewed_rectangle.png
 convert -resize 30% test1_07_birds_eye_view.png small30/test1_07_birds_eye_view.png

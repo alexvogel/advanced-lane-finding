@@ -52,8 +52,8 @@ parser.add_argument('--visLog', metavar='INT', type=int, action='store', default
                    help='for debugging or documentation of the pipeline you can output the image at a certain processing step \
                    1=undistorted image \
                    2=grayscale \
-                   3=binary mask magnitude sobel xy \
-                   4=hls binary mask \
+                   3=binary mask b of lab \
+                   4=binary mask l of luv \
                    5=combination of binary masks \
                    6=unwarped binary with polygon \
                    7=warped binary with polygon \
