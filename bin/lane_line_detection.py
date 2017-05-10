@@ -76,8 +76,8 @@ map_int_name = {
                     0: '00_original',
                     1: '01_undist',
                     2: '02_gray',
-                    3: '03_binary_sobelxy',
-                    4: '04_binary_hls',
+                    3: '03_binary_b_of_lab',
+                    4: '04_binary_l_of_luv',
                     5: '05_combined_binaries',
                     6: '06_transform1',
                     7: '07_transform2',
@@ -156,7 +156,7 @@ leftLine = Line()
 rightLine = Line()
 
 def process_image(img, leftLine=leftLine, rightLine=rightLine):
-    result, leftLine, rightLine = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, leftLine, rightLine, args.format, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
+    result, leftLine, rightLine = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, leftLine, rightLine, args.format, sobel_kernel=9, mag_sobelxy_thresh=(70, 100), hls_thresh=(120, 255), lab_thresh=(160, 255), luv_thresh=(200, 255))
     return result
 
 
@@ -165,7 +165,7 @@ if args.image:
     
     # read image
     img = mpimg.imread(args.image)
-    result, leftLine, rightLine = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, leftLine, rightLine, args.format, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255))
+    result, leftLine, rightLine = laneLinePipeline(img, mtx, dist, args.outDir, args.visLog, leftLine, rightLine, args.format, sobel_kernel=9, mag_sobelxy_thresh=(70, 100), hls_thresh=(120, 255), lab_thresh=(160, 255), luv_thresh=(200, 255))
     
     print(map_int_name[args.visLog])
     writeImage(result, args.outDir, map_int_name[args.visLog], cmap=None)

@@ -61,7 +61,7 @@ def writeImage(item, dir, basename, cmap=None):
     
     plt.clf()
 
-def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format, sobel_kernel=5, mag_sobelxy_thresh=(30, 100), hls_thresh=(170, 255)):
+def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format, sobel_kernel=5, mag_sobelxy_thresh=(70, 100), hls_thresh=(120, 255), lab_thresh=(160, 255), luv_thresh=(200, 255)):
     '''
         processes an image from input to output in finding a lane line
         img: input image in bgr colorspace
@@ -105,34 +105,56 @@ def laneLinePipeline(rgb, mtx, dist, outDir, retNr, leftLine, rightLine, format,
     if retNr is 2:
         return gray_as_rgb, leftLine, rightLine
 
-    ###############################
-    #
-    # STEP 3: CREATE A BINARY MASK OF THE MAGNITUDE SOBEL-XY-OPERATOR
-    #
-    ###############################
-    binary_output_abs_sobelxy = getBinaryMagSobelXY(gray, sobel_kernel, mag_sobelxy_thresh)
-    binary_output_abs_sobelxy_as_rgb = cv2.cvtColor(binary_output_abs_sobelxy * 255, cv2.COLOR_GRAY2RGB)
-    imageBank[3] = binary_output_abs_sobelxy_as_rgb
-    if retNr is 3:
-        return binary_output_abs_sobelxy_as_rgb, leftLine, rightLine
+#     ###############################
+#     #
+#     # STEP 3: CREATE A BINARY MASK OF THE MAGNITUDE SOBEL-XY-OPERATOR
+#     #
+#     ###############################
+#     binary_output_abs_sobelxy = getBinaryMagSobelXY(gray, sobel_kernel, mag_sobelxy_thresh)
+#     binary_output_abs_sobelxy_as_rgb = cv2.cvtColor(binary_output_abs_sobelxy * 255, cv2.COLOR_GRAY2RGB)
+#     imageBank[3] = binary_output_abs_sobelxy_as_rgb
+#     if retNr is 3:
+#         return binary_output_abs_sobelxy_as_rgb, leftLine, rightLine
+ 
+#     ###############################
+#     #
+#     # STEP 4: CREATE A BINARY MASK OF THE S OF THE HLS COLORSPACE VERSION
+#     #
+#     ###############################
+#     binary_output_s_of_hls = getBinarySHls(rgb_undistort, hls_thresh)
+#     binary_output_s_of_hls_as_rgb = cv2.cvtColor(binary_output_s_of_hls * 255, cv2.COLOR_GRAY2RGB)
+#     imageBank[4] = binary_output_s_of_hls_as_rgb
+#     if retNr is 4:
+#         return binary_output_s_of_hls_as_rgb, leftLine, rightLine
 
     ###############################
     #
-    # STEP 4: CREATE A BINARY MASK OF THE S OF THE HLS COLORSPACE VERSION
+    # STEP 3: CREATE A BINARY MASK OF THE B OF THE LAB COLORSPACE VERSION
     #
     ###############################
-    binary_output_s_of_hls = getBinarySHls(rgb_undistort, hls_thresh)
-    binary_output_s_of_hls_as_rgb = cv2.cvtColor(binary_output_s_of_hls * 255, cv2.COLOR_GRAY2RGB)
-    imageBank[4] = binary_output_s_of_hls_as_rgb
+    binary_output_b_of_lab = getBinaryBLab(rgb_undistort, lab_thresh)
+    binary_output_b_of_lab_as_rgb = cv2.cvtColor(binary_output_b_of_lab * 255, cv2.COLOR_GRAY2RGB)
+    imageBank[3] = binary_output_b_of_lab_as_rgb
+    if retNr is 3:
+        return binary_output_b_of_lab_as_rgb, leftLine, rightLine
+
+     ###############################
+    #
+    # STEP 4: CREATE A BINARY MASK OF THE L OF THE LUV COLORSPACE VERSION
+    #
+    ###############################
+    binary_output_l_of_luv = getBinaryLLuv(rgb_undistort, luv_thresh)
+    binary_output_l_of_luv_as_rgb = cv2.cvtColor(binary_output_l_of_luv * 255, cv2.COLOR_GRAY2RGB)
+    imageBank[4] = binary_output_l_of_luv_as_rgb
     if retNr is 4:
-        return binary_output_s_of_hls_as_rgb, leftLine, rightLine
+        return binary_output_l_of_luv_as_rgb, leftLine, rightLine
 
     ###############################
     #
     # STEP 5: COMBINE THE TWO BINARY MASKS IN ONE IMAGE
     #
     ###############################
-    binary_combined = combineBinaries([binary_output_abs_sobelxy, binary_output_s_of_hls])
+    binary_combined = combineBinaries([binary_output_b_of_lab, binary_output_l_of_luv])
     binary_combined_as_rgb = cv2.cvtColor(binary_combined * 255, cv2.COLOR_GRAY2RGB)
     imageBank[5] = binary_combined_as_rgb
     if retNr is 5:
@@ -718,7 +740,7 @@ def transformToBirdsView(img):
     # define source points
     src_xindent_lower = 200
     src_xindent_upper = 595
-    src_yindent_upper = 450
+    src_yindent_upper = 460
 
     # define source points for transformation
     src = np.float32( [[ src_xindent_lower,                 img.shape[0] ],    # left lower corner
@@ -727,7 +749,7 @@ def transformToBirdsView(img):
                         [ src_xindent_upper,                src_yindent_upper ] ] ) # left upper corner
     
     # define destination points
-    dst_xindent_lower = 250
+    dst_xindent_lower = 300
 
     # define destination points for transformation
     dst = np.float32( [[ dst_xindent_lower,                img.shape[0] ],     # left lower corner
@@ -823,6 +845,46 @@ def getBinarySHls(rgb, s_thresh):
     return binary_output
     
 
+def getBinaryBLab(rgb, b_thresh):
+    '''
+        isolates the b channel of LAB colorspace and creates a thresholded binary
+        rgb: input image in RGB colorspace
+        b_thresh: tuple of min and max threshold for the binary generation
+        return: binary image of the thresholded b channel of an image in LAB colorspace
+    '''
+    
+    # 1) Convert to LAB color space
+    lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)
+    
+    # 2) Apply a threshold to the B channel
+    B = lab[:,:,2]
+    
+    binary_output = np.zeros_like(B)
+    binary_output[(B > b_thresh[0]) & (B <= b_thresh[1])] = 1
+    
+    # 3) Return a binary image of threshold result
+    return binary_output
+    
+def getBinaryLLuv(rgb, l_thresh):
+    '''
+        isolates the l channel of LUV colorspace and creates a thresholded binary
+        rgb: input image in RGB colorspace
+        l_thresh: tuple of min and max threshold for the binary generation
+        return: binary image of the thresholded l channel of an image in LUV colorspace
+    '''
+    
+    # 1) Convert to LUV color space
+    luv = cv2.cvtColor(rgb, cv2.COLOR_RGB2LUV)
+    
+    # 2) Apply a threshold to the L channel
+    L = luv[:,:,0]
+    
+    binary_output = np.zeros_like(L)
+    binary_output[(L > l_thresh[0]) & (L <= l_thresh[1])] = 1
+    
+    # 3) Return a binary image of threshold result
+    return binary_output
+    
 def getBinaryMagSobelXY(gray, sobel_kernel, mag_sobelxy_thresh):
     '''
         calculates the magnitude of sobel and creates a thresholded binary
