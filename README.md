@@ -170,7 +170,6 @@ A perspectively skewed rectangle is placed on the image in line 168 of 'lib/help
 
 #### Step 7/8. Birds Eye View
 
-The code for my perspective transform includes a function called `transformToBirdsView()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).
 I hardcoded the source and destination points in the following manner:
 
 This resulted in the following source and destination points:
@@ -216,13 +215,13 @@ The curvature of the detected lane and the vehicle-deviation from the lane cente
 
 You find the result of project video here [out/vid/project_output.mp4](out/vid/project_output.mp4)
 
-[![Advanced Lane Finding](./readme_media/small50/placeholder_project_output.png)](https://www.youtube.com/edit?o=U&video_id=a2-SzkAc1_g "Advanced Lane Finding")
+[![Advanced Lane Finding](./readme_media/small50/placeholder_project_output.png)](https://www.youtube.com/watch?v=a2-SzkAc1_g "Advanced Lane Finding")
 
 #### Result Of Project Video With Image Pipeline Visualization
 
 You find the result of project video with pipeline visualization here [out/vid/project_collage4_output.mp4](out/vid/project_collage4_output.mp4)
 
-[![Advanced Lane Finding](./readme_media/small50/placeholder_project_collage4.png)](https://www.youtube.com/edit?o=U&video_id=1xjHJwPOKKk "Advanced Lane Finding Image Pipeline")
+[![Advanced Lane Finding](./readme_media/small50/placeholder_project_collage4.png)](https://www.youtube.com/watch?v=1xjHJwPOKKk "Advanced Lane Finding Image Pipeline")
 
 ### Discussion
 
