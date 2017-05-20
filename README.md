@@ -99,19 +99,19 @@ example call for processing an image. This outputs a certain step of the image p
 python bin/lane_line_detection.py --image inp/img/test_images/test1.jpg --visLog 4
 
 example call for processing a video:
-python bin/lane_line_detection.py --image inp/vid/project_video.mp4
+python bin/lane_line_detection.py --video inp/vid/project_video.mp4
 
 example call for processing only the part of a video between 38 and 45 seconds:
-python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --startTime 38 --endTime 45
+python bin/lane_line_detection.py --video inp/vid/project_video.mp4 --startTime 38 --endTime 45
 
 example call for processing a video. This outputs a video of a certain step of the image pipeline:
-python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --visLog 4
+python bin/lane_line_detection.py --video inp/vid/project_video.mp4 --visLog 4
 
 example call for processing a video. This outputs a video of 4 important steps of the image pipeline:
-python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --format collage4
+python bin/lane_line_detection.py --video inp/vid/project_video.mp4 --format collage4
 
 example call for processing a video. This outputs a video of 9 important steps of the image pipeline:
-python bin/lane_line_detection.py --image inp/vid/project_video.mp4 --format collage9
+python bin/lane_line_detection.py --video inp/vid/project_video.mp4 --format collage9
 ```
 ### 4. Camera Calibration
 

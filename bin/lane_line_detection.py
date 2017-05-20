@@ -4,7 +4,7 @@
     Project 4
     Udacity Self-Driving-Car-Engineer Nanodegree
 
-    Advanced Lane Line Detection
+    Advanced Lane Finding
     
     1) Camera Calibration (Create Camera Matrix)
     2) Distortion Correction of Images
