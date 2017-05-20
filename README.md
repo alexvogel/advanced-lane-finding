@@ -49,7 +49,7 @@ The goals / steps of this project are the following:
 | output test videos    | out/vid/*					|
 
 
-### 3. Usage
+### 2. Usage
 
 ```
 usage: lane_line_detection.py [-h] [--image [PATH]] [--video [PATH]]
@@ -113,7 +113,7 @@ python bin/lane_line_detection.py --video inp/vid/project_video.mp4 --format col
 example call for processing a video. This outputs a video of 9 important steps of the image pipeline:
 python bin/lane_line_detection.py --video inp/vid/project_video.mp4 --format collage9
 ```
-### 4. Camera Calibration
+### 3. Camera Calibration
 
 The code for this step is contained in the 'calibrateCamera' function in the lines 852 through 923 of the file 'lib/helper_lane_lines.py'.  
 
@@ -125,7 +125,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 After a successful calibration procedure, the return value, camera calibration matrix, distortion coefficients, the rotation and the translation vectors (ret, mtx, dist, rvecs, tvecs) are written to a pickle file '.calibration.pkl' and placed in the directory, where the calibration images reside. The next time the program is called with the same calibration images, the calibration step will be skipped and the precalculated calibration parameters will be read from the pickle file.
 
-### 5. Pipeline (single images)
+### 4. Pipeline (single images)
 
 The image pipeline is shaped by 12 image processing steps. The high level code for the image pipeline is contained in the 'laneLinePipeline' function in the lines 64 through 255 of the file 'lib/helper_lane_lines.py'.
 The pipeline transforms an input image to an image with the found lane in it.
@@ -209,23 +209,23 @@ The curvature of the detected lane and the vehicle-deviation from the lane cente
 
 ![Output][image16]
 
-### Pipeline (video)
+### 5. Pipeline (video)
 
-#### Result Of Project Video
+#### 5.1 Result Of Project Video
 
 You find the result of project video here [out/vid/project_output.mp4](out/vid/project_output.mp4)
 
 [![Advanced Lane Finding](./readme_media/small50/placeholder_project_output.png)](https://www.youtube.com/watch?v=a2-SzkAc1_g "Advanced Lane Finding")
 
-#### Result Of Project Video With Image Pipeline Visualization
+#### 5.2 Result Of Project Video With Image Pipeline Visualization
 
 You find the result of project video with pipeline visualization here [out/vid/project_collage4_output.mp4](out/vid/project_collage4_output.mp4)
 
 [![Advanced Lane Finding](./readme_media/small50/placeholder_project_collage4.png)](https://www.youtube.com/watch?v=1xjHJwPOKKk "Advanced Lane Finding Image Pipeline")
 
-### Discussion
+### 6 Discussion
 
-#### 1. Problems / Issues
+#### 6.1 Problems / Issues
 
 * One problem that I experienced was, that in the project video the left line jumped to the left when the vehicle drove over the brighter road surface.
 
@@ -235,11 +235,11 @@ I solved that problem by changing the destination points in the step 7 "Birds Ey
 
 I solved this problem by instead of working with the fitted polynomial, I calculated the mean of the last 5 frames. This solved the 'jumping-lane' problem.
 
-#### 2. Where Will The Pipeline Likely Fail?
+#### 6.2 Where Will The Pipeline Likely Fail?
 
 My current pipeline will fail on roads with color edges that run parallel to the lane lines, like in video inp/vid/challenge.mp4. These edges will be falsely detected as lane lines and make the pipeline fail.
 
-#### 3. Improve Robustness
+#### 6.3 Improve Robustness
 
 These improvements would make the pipeline more robust:
 
